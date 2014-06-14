@@ -39,7 +39,7 @@ int kp_remove_file(KP *kp,KP_ARG *arg);
 int kp_copy_file(KP *kp,KP_ARG *arg);
 
 //复制引用
-int kp_copy_ref(KP *kp,KP_ARG *arg,char *root,char *path,KP_REF *ref);
+int kp_copy_ref(KP *kp,KP_ARG *arg,char *root,char *path);
 
 /* 上传文件
  * func为进度函数
