@@ -9,7 +9,7 @@
 #include "kp_oauth.h"
 #include <curl/curl.h>
 
-typedef kp_progress curl_progress_callback;
+typedef curl_progress_callback kp_progress;
 
 /* 得到用户信息
  * 发生错误时返回错误代码

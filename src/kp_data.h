@@ -144,8 +144,11 @@ typedef struct kp_file_his
 /* 初始化KP
  * key为consumer_key
  * secret为consumer_secret
+ * oauth_token为oauth_token
+ * oauth_secret为oauth_secret
+ * 后两个参数在没有验证时可以设置为NULL
  */
-KP *kp_init(char *key,char *secret);
+KP *kp_init(char *key,char *secret,char oauth_token,char *oauth_secret);
 
 //释放内存
 void kp_free(KP *kp);
