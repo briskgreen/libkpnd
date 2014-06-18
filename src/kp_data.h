@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <json/json.h>
 
 /* 快盘API接口参数链表
  * key为参数名称
@@ -77,7 +78,7 @@ typedef struct
  * type:path=/,root=kuaipan时不返回。folder为文件夹，file为文件。
  * size:path=/,root=kuaipan时不返回。文件大小。
  * create_time:path=/,root=kuaipan时不返回。YYYY-MM-DD hh:mm:ss。
- * moify_time:path=/,root=kuaipan时不返回。YYYY-MM-DD hh:mm:ss。
+ * modify_time:path=/,root=kuaipan时不返回。YYYY-MM-DD hh:mm:ss。
  * name:path=/，root=kuaipan时不返回。文件名。
  * rev:path=/,root=kuaipan时不返回。
  * is_deleted:path=/，root=kuaipan时不返回。是否被删除的文件。
@@ -100,11 +101,11 @@ typedef struct kp_file_info
 	int type;
 	uint32_t size;
 	char *create_time;
-	char *moify_time;
+	char *modify_time;
 	char *name;
 	char *rev;
 	bool is_deleted;
-	char *file_id;
+	char *files_file_id;
 	int file_type;
 	uint32_t file_size;
 	char *file_create_time;
@@ -141,6 +142,13 @@ typedef struct kp_file_his
 	struct kp_file_his *next;
 }KP_FILE_HIS;
 
+//保存错误代码
+int kp_errno;
+
+#define KP_ERROR_NO_MEM -1
+#define KP_ERROR_KEY -2
+#define KP_ERROR_SECRET -3
+
 /* 初始化KP
  * key为consumer_key
  * secret为consumer_secret
@@ -148,7 +156,7 @@ typedef struct kp_file_his
  * oauth_secret为oauth_secret
  * 后两个参数在没有验证时可以设置为NULL
  */
-KP *kp_init(char *key,char *secret,char oauth_token,char *oauth_secret);
+KP *kp_init(char *key,char *secret,char *oauth_token,char *oauth_secret);
 
 //释放内存
 void kp_free(KP *kp);
@@ -157,7 +165,7 @@ void kp_free(KP *kp);
 void kp_user_info_free(KP_USER_INFO *user);
 
 //释放文件（夹）内存占用
-void kp_file_info(KP_FILE_INFO *file);
+void kp_file_info_free(KP_FILE_INFO *file);
 
 //释放外链信息
 void kp_file_share_free(KP_FILE_SHARE *file);
@@ -199,7 +207,7 @@ void kp_arg_remove(KP_ARG *arg,char *key);
  * 失败返回false
  * 如果参数链表中没有要更新的参数则更新失败
  */
-bool kp_arg_updata(KP_ARG *arg,char *key,char *value);
+bool kp_arg_update(KP_ARG *arg,char *key,char *value);
 
 //判断参数链表是否为空
 bool kp_arg_empty(KP_ARG *arg);
