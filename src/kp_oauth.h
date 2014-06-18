@@ -6,7 +6,6 @@
 
 #include "kp_data.h"
 #include <oauth.h>
-#include <json/json.h>
 
 /* 初始化oauth参数并得到一个KP_ARG参数列表
  */
