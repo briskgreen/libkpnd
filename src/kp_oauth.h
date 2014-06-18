@@ -8,6 +8,14 @@
 #include <oauth.h>
 #include <json/json.h>
 
+/* 初始化oauth参数并得到一个KP_ARG参数列表
+ */
+KP_ARG *kp_oauth_arg_init(KP *kp);
+
+/* 向oauth参数列表中添加签名参数
+ */
+void kp_oauth_set_signature(KP *kp,KP_ARG *arg);
+
 /* 得到签名字符串
  * kp为KP数据结构
  * http_method为HTTP方式如GET、POST
