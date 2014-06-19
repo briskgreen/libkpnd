@@ -4,6 +4,7 @@ void _kp_arg_add(KP_VALUE *head,KP_VALUE *data);
 bool _kp_arg_remove(KP_VALUE *head,char *key);
 bool _kp_arg_update(KP_VALUE *head,char *key,char *value);
 void _kp_arg_sort(KP_VALUE *head);
+bool _kp_arg_in(KP_VALUE *head,char *key);
 
 #define NULL_NOT_FREE(p) \
 {\
@@ -200,6 +201,11 @@ int kp_arg_length(KP_ARG *arg)
 	return arg->length;
 }
 
+bool kp_arg_in(KP_ARG *arg,char *key)
+{
+	return _kp_arg_in(arg->arg,key);
+}
+
 void kp_arg_remove(KP_ARG *arg,char *key)
 {
 	if(strcmp(arg->arg->key,key) == 0)
@@ -231,6 +237,33 @@ bool kp_arg_empty(KP_ARG *arg)
 		return true;
 	else
 		return false;
+}
+
+char *kp_arg_get_url(KP_VALUE *head)
+{
+	char *url=NULL;
+	int len=0;
+	int arg_len;
+
+	while(head)
+	{
+		arg_len=len;
+		len+=strlen(head->key)+strlen(head->value)+1;
+
+		url=realloc(url,sizeof(char)*len+2);
+		if(url == NULL)
+		{
+			kp_errno=KP_ERROR_NO_MEM;
+			return NULL;
+		}
+
+		snprintf(res+arg_len,sizeof(char)*(len+2-arg_len),"%s=%s&",head->key,head->value);
+		head=head->next;
+	}
+
+	url[len-1]='\0';
+
+	return url;
 }
 
 void _kp_arg_add(KP_VALUE *head,KP_VALUE *data)
@@ -307,4 +340,17 @@ void _kp_arg_sort(KP_VALUE *head)
 			}
 		}
 	}
+}
+
+bool _kp_arg_in(KP_VALUE *head,char *key)
+{
+	while(head)
+	{
+		if(strcmp(head->key,key) == 0)
+			return true;
+
+		head=head->next;
+	}
+
+	return false;
 }

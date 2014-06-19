@@ -39,8 +39,6 @@ typedef struct
  * secret为用户创建应用时的consumer_secret
  * oauth_token为临时token或者授权后的token
  * oauth_secret为授权后的oauth_secret
- * oauth_callback为授权后返回的oauth_callback_confirmed
- * oauth_verifier为验证码
  */
 typedef struct
 {
@@ -48,8 +46,6 @@ typedef struct
 	char *secret;
 	char *oauth_token;
 	char *oauth_secret;
-	bool oauth_callback;
-	char *oauth_verifier;
 }KP;
 
 /* 用户信息数据结构
@@ -197,6 +193,9 @@ void kp_arg_sort(KP_ARG *arg);
 //得到参数个数
 int kp_arg_length(KP_ARG *arg);
 
+//判断列表中是否有一个参数
+bool kp_arg_in(KP_ARG *arg,char *key);
+
 //删除一个参数
 void kp_arg_remove(KP_ARG *arg,char *key);
 
@@ -211,5 +210,8 @@ bool kp_arg_update(KP_ARG *arg,char *key,char *value);
 
 //判断参数链表是否为空
 bool kp_arg_empty(KP_ARG *arg);
+
+//得到参数 
+char *kp_arg_get_url(KP_VALUE *head);
 
 #endif
