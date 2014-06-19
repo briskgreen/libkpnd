@@ -11,9 +11,17 @@
  */
 KP_ARG *kp_oauth_arg_init(KP *kp);
 
-/* 向oauth参数列表中添加签名参数
- */
-void kp_oauth_set_signature(KP *kp,KP_ARG *arg);
+/* 更新时间戳*/
+bool kp_oauth_update_timestamp(KP_ARG *arg);
+
+/* 更新nonce*/
+bool kp_oauth_update_nonce(KP_ARG *arg);
+
+/* 更新签名参数*/
+void kp_oauth_update_signature(KP_ARG *arg,char *key);
+
+/* 更新oauth_token*/
+void kp_oauth_update_token(KP_ARG *arg,char *token);
 
 /* 得到签名字符串
  * kp为KP数据结构
@@ -26,7 +34,10 @@ char *kp_get_oauth_key(KP *kp,char *http_method,char *url,KP_ARG *arg);
 //得到授权网页地址
 char *kp_get_authorize_url(KP *kp,KP_ARG *arg);
 
+//得到accessToken
+void kp_get_access_token(KP *kp,KP_ARG *arg);
+
 //进行授权
-bool kp_app_authorize(KP *kp);
+bool kp_app_authorize(KP *kp,char *username,char *passwd);
 
 #endif
