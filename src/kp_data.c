@@ -48,6 +48,7 @@ KP *kp_init(char *key,char *secret,char *oauth_token,char *oauth_secret)
 		kp->oauth_secret=NULL;
 	kp->oauth_callback=false;
 	kp->oauth_verifier=NULL;
+	kp->errmsg=NULL;
 
 	return kp;
 }
@@ -59,6 +60,7 @@ void kp_free(KP *kp)
 	NULL_NOT_FREE(kp->oauth_token);
 	NULL_NOT_FREE(kp->oauth_secret);
 	NULL_NOT_FREE(kp->oauth_verifier);
+	NULL_NOT_FREE(kp->errmsg);
 	free(kp);
 }
 
@@ -130,6 +132,9 @@ KP_ARG *kp_arg_init(void)
 bool kp_arg_add(KP_ARG *arg,char *key,char *value)
 {
 	KP_VALUE *data;
+
+	if(kp_arg_in(arg,key))
+		return false;
 
 	data=malloc(sizeof(KP_VALUE));
 	if(data == NULL)

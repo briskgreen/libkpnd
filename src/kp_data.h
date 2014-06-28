@@ -39,6 +39,7 @@ typedef struct
  * secret为用户创建应用时的consumer_secret
  * oauth_token为临时token或者授权后的token
  * oauth_secret为授权后的oauth_secret
+ * errmsg为返回的错误字符串
  */
 typedef struct
 {
@@ -46,6 +47,7 @@ typedef struct
 	char *secret;
 	char *oauth_token;
 	char *oauth_secret;
+	char *errmsg;
 }KP;
 
 /* 用户信息数据结构
