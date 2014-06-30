@@ -68,6 +68,30 @@ typedef struct
 	uint64_t quota_recycled;
 }KP_USER_INFO;
 
+/* 文件信息
+ * file_id:文件唯一标识id
+ * type:folder为文件夹，file为文件。
+ * size:文件大小
+ * create_time:YYYY-MM-DD hh:mm:ss
+ * modify_time:YYYY-MM-DD hh:mm:ss
+ * name:文件名
+ * is_deleted:是否被删除的文件
+ * next:下一个文件（夹）信息
+ */
+typedef struct kp_file_node 
+{
+	char *file_id;
+	enum TYPE {folder,file}type;
+	uint32_t size;
+	char *create_time;
+	char *modify_time;
+	char *name;
+	char *rev;
+	bool is_deleted;
+
+	struct kp_file_node *next;
+}KP_FILE_NODE;
+
 /* 文件（夹）信息列表
  * path:文件或文件夹相对<root>的路径
  * root:kuaipan或app_folder
@@ -80,14 +104,7 @@ typedef struct
  * name:path=/，root=kuaipan时不返回。文件名。
  * rev:path=/,root=kuaipan时不返回。
  * is_deleted:path=/，root=kuaipan时不返回。是否被删除的文件。
- * files_file_id:文件唯一标识id
- * file_type:folder为文件夹，file为文件。
- * file_size:文件大小
- * file_create_time:YYYY-MM-DD hh:mm:ss
- * file_modify_time:YYYY-MM-DD hh:mm:ss
- * file_name:文件名
- * file_is_deleted:是否被删除的文件
- * next:下一个文件（夹）信息
+ * files:文件信息
  */
 
 typedef struct kp_file_info
@@ -103,16 +120,8 @@ typedef struct kp_file_info
 	char *name;
 	char *rev;
 	bool is_deleted;
-	char *files_file_id;
-	int file_type;
-	uint32_t file_size;
-	char *file_create_time;
-	char *file_modify_time;
-	char *file_name;
-	char *file_rev;
-	char *file_is_deleted;
 
-	struct kp_file_info *next;
+	KP_FILE_NODE *files;
 }KP_FILE_INFO;
 
 /* 文件分享信息
