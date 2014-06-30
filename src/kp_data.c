@@ -72,27 +72,27 @@ void kp_user_info_free(KP_USER_INFO *user)
 
 void kp_file_info_free(KP_FILE_INFO *file)
 {
-	KP_FILE_INFO *temp;
+	KP_FILE_NODE *temp;
 
-	while(file)
+	NULL_NOT_FREE(file->path);
+	NULL_NOT_FREE(file->root);
+	NULL_NOT_FREE(file->file_id);
+	NULL_NOT_FREE(file->create_time);
+	NULL_NOT_FREE(file->modify_time);
+	NULL_NOT_FREE(file->name);
+	NULL_NOT_FREE(file->rev);
+
+	while(file->files)
 	{
-		temp=file;
+		temp=file->files;
 
-		NULL_NOT_FREE(file->path);
-		NULL_NOT_FREE(file->root);
-		NULL_NOT_FREE(file->file_id);
-		NULL_NOT_FREE(file->create_time);
-		NULL_NOT_FREE(file->modify_time);
-		NULL_NOT_FREE(file->name);
-		NULL_NOT_FREE(file->rev);
-		NULL_NOT_FREE(file->files_file_id);
-		NULL_NOT_FREE(file->file_create_time);
-		NULL_NOT_FREE(file->file_modify_time);
-		NULL_NOT_FREE(file->file_name);
-		NULL_NOT_FREE(file->file_rev);
-		NULL_NOT_FREE(file->file_is_deleted);
+		NULL_NOT_FREE(file->files->file_id);
+		NULL_NOT_FREE(file->files->create_time);
+		NULL_NOT_FREE(file->files->modify_time);
+		NULL_NOT_FREE(file->files->name);
+		NULL_NOT_FREE(file->files->rev);
 
-		file=file->next;
+		file->files=file->files->next;
 		free(temp);
 	}
 }
