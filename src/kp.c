@@ -6,6 +6,7 @@ int object_get_err(json_object *obj,char **res);
 void object_string_get(json_object *obj,char **res,char *key);
 void object_int_get(json_object *obj,uint32_t *res,char *key);
 void object_int64_get(json_object *obj,uint64_t *res,char *key);
+KP_FILE_NODE *init_kp_file_node(void);
 
 int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 {
@@ -132,10 +133,12 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 	json_object *obj;
 	json_object *files;
 	json_object *res;
-	KP_FILE_INFO *node;
+	json_object *item;
+	KP_FILE_NODE *head,*node;
 	int len;
 	int i;
 
+	file->files=NULL;
 	obj=json_tokener_paser(data);
 	if(obj == NULL)
 	{
@@ -150,6 +153,41 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 		return KP_FILE_INFO;
 	}
 
+	object_string_get(obj,&file->path,"path");
+	object_string_get(obj,&file->root,"root");
+	object_string_get(obj,&file->file_id,"file_id");
+	res=json_object_object_get(obj,"hash");
+	if(res)
+	{
+		strncpy(file->hash,json_object_get_string(res),sizeof(char)*31);
+		file->hash[32]='\0';
+
+		json_object_put(res);
+	}
+
+	res=json_object_get_string(obj,"type");
+	if(res)
+	{
+		char *str=json_object_get_string(res);
+		if(strcmp(str,"folder") == 0)
+			file->type=folder;
+		else if(strcmp(str,"file") == 0)
+			file->type=file;
+
+		json_object_put(res);
+	}
+	object_int_get(obj,&file->size,"size");
+	object_string_get(obj,&file->create_time,"create_tile");
+	object_string_get(obj,&file->modity_time,"modity_time");
+	object_string_get(obj,&file->name,"name");
+	object_string_get(obj,&file->rev,"rev");
+	res=json_object_object_get(obj,"is_deleted");
+	if(res)
+	{
+		file->is_deleted=json_object_get_boolean(res);
+		json_object_put(res);
+	}
+
 	files=json_object_object_get(obj,"files");
 	len=json_object_array_length(files);
 	if(len < 0)
@@ -160,16 +198,54 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 		return KP_ERROR_FILE_INFO;
 	}
 
+	head=file->files;
 	for(i=0;i < len;++i)
 	{
 		res=json_object_array_get_idx(files,i);
-
-		node=malloc(sizeof(KP_FILE_INFO));
+		
+		node=init_kp_file_node();
 		if(node == NULL)
 			continue;
 
-		object_string_get(res,&node->
+		object_string_get(res,&node->file_id,"file_id");
+		item=json_object_object_get(res,"type");
+		if(item)
+		{
+			char *str=json_object_get_string(item);
+			if(strcmp(str,"folder") == 0)
+				node->type=folder;
+			else if(strcmp(str,"file") == 0)
+				node->type=file;
+
+			json_object_put(item);
+		}
+		object_int_get(res,&node->size,"size");
+		object_string_get(res,&node->create_time,"create_time");
+		object_string_get(res,&node->modity_time,"modity_time");
+		object_string_get(res,&node->name,"name");
+		object_string_get(res,&node->rev,"rev");
+		item=json_object_object_get(res,"is_deleted");
+		if(item)
+		{
+			node->is_deleted=json_object_get_boolean(item);
+			json_object_put(item);
+		}
+
+		if(head == NULL)
+		{
+			file->files=node;
+			head=node;
+		}
+		else
+		{
+			head->next=node;
+			head=node;
+		}
+
+		json_object_put(res);
 	}
+
+	return 1;
 }
 
 int object_get_err(json_object *obj,char **res)
@@ -225,4 +301,23 @@ void object_int64_get(json_object *obj,uint64_t *res,char *key)
 		*res=json_object_get_int64(data);
 		json_object_put(data);
 	}
+}
+
+KP_FILE_NODE *init_kp_file_node(void)
+{
+	KP_FILE_NODE *node;
+
+	node=malloc(sizeof(KP_FILE_NODE));
+	if(node == NULL)
+		return NULL;
+
+	node->file_id=NULL;
+	node->type=file;
+	node->size=0;
+	node->create_time=NULL;
+	node->modity_time=NULL;
+	node->rev=NULL;
+	node->is_deleted=false;
+
+	return node;
 }
