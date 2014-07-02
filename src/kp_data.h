@@ -113,7 +113,7 @@ typedef struct kp_file_info
 	char *root;
 	char hash[32];
 	char *file_id;
-	int type;
+	enum TYPE {folder,file}type;
 	uint32_t size;
 	char *create_time;
 	char *modify_time;
