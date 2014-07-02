@@ -2,6 +2,7 @@
 
 int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data);
 int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data);
+int _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data);
 int object_get_err(json_object *obj,char **res);
 void object_string_get(json_object *obj,char **res,char *key);
 void object_int_get(json_object *obj,uint32_t *res,char *key);
@@ -83,7 +84,10 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 
 	len+=sizeof(char)*(strlen(arg_url)+1);
 	if((url=malloc(len)) == NULL)
+	{
+		free(base);
 		return KP_ERROR_NO_MEM;
+	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
 	free(base);
@@ -94,6 +98,56 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 		return KP_ERROR_NET_GET;
 
 	return _kp_get_file_info(kp,file,res);
+}
+
+int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
+		KP_FILE_SHARE *file)
+{
+	char *key;
+	char *res;
+	char *arg_url;
+	char *url;
+	char *base;
+	int len;
+
+	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/shares/")+strlen(root)+strlen(path)+2);
+	if((base=malloc(len)) == NULL)
+		return KP_ERROR_NO_MEM;
+	snprintf(base,len,"http://openapi.kuaipan.cn/1/shares/%s/%s",root,path);
+	kp_oauth_update_timestamp(arg);
+	kp_oauth_update_once(arg);
+	key=kp_get_oauth_key(kp,"GET",base,arg);
+	if(key == NULL)
+	{
+		free(base);
+		return KP_ERROR_ARG;
+	}
+	kp_oauth_update_signature(arg,key);
+	free(key);
+
+	arg_url=kp_arg_get_url(arg);
+	if(arg_url == NULL)
+	{
+		free(base);
+		return KP_ERROR_ARG;
+	}
+
+	len+=sizeof(char)*(strlen(arg_url)+1);
+	if((url=malloc(len)) == NULL)
+	{
+		free(base);
+		return KP_ERROR_NO_MEM;
+	}
+	snprintf(url,len,"%s?%s",base,arg_url);
+	free(arg_url);
+	free(base);
+
+	res=oauth_http_get(url,NULL);
+	free(url);
+	if(res == NULL)
+		return KP_ERROR_NET_GET;
+
+	return _kp_get_file_share(kp,file,res);
 }
 
 int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)
@@ -245,7 +299,37 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 		json_object_put(res);
 	}
 
-	return 1;
+	json_object_put(obj);
+	free(data);
+
+	return 0;
+}
+
+int _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data)
+{
+	json_object *obj;
+
+	obj=json_tokener_paser(data);
+	if(obj == NULL)
+	{
+		free(data);
+		return KP_ERROR_FILE_SHARE;
+	}
+
+	if(object_get_err(obj,&kp->errmsg))
+	{
+		json_object_put(obj);
+		free(data);
+		return KP_ERROR_FILE_SHARE;
+	}
+
+	object_string_get(obj,&file->url,"url");
+	object_string_get(obj,&file->access_code,"access_code");
+
+	json_object_put(obj);
+	free(data);
+
+	return 0;
 }
 
 int object_get_err(json_object *obj,char **res)
