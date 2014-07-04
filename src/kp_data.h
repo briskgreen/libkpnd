@@ -138,16 +138,23 @@ typedef struct
  * file_id:文件id 
  * rev:文件版本
  * create_time:YYYY-MM-DD hh:mm:ss该版本被覆盖的时间。
- * next:下一个文件
  */
 typedef struct kp_file_his
 {
 	char *file_id;
 	char *rev;
 	char *create_time;
-
-	struct kp_file_his *next;
 }KP_FILE_HIS;
+
+/* 复制引用数据结构
+ * copy_ref 复制引用，可以作为copy接口的参数
+ * expires YYYY-MM-DD hh:mm:ss引用过期时间
+ */
+typedef struct
+{
+	char *copy_ref;
+	char *expires;
+}KP_REF;
 
 //保存错误代码
 int kp_errno;
@@ -179,6 +186,9 @@ void kp_file_share_free(KP_FILE_SHARE *file);
 
 //释放文件历史版本占用内存
 void kp_file_his_free(KP_FILE_HIS *file);
+
+//释放复制引用战胜内存
+void kp_ref_free(KP_REF *ref);
 
 //初始化参数链表
 KP_ARG *kp_arg_init(void);

@@ -112,6 +112,12 @@ void kp_file_his_free(KP_FILE_HIS *file)
 	free(file);
 }
 
+void kp_ref_free(KP_REF *ref)
+{
+	NULL_NOT_FREE(ref->copy_ref);
+	NULL_NOT_FREE(ref->expires);
+}
+
 KP_ARG *kp_arg_init(void)
 {
 	KP_ARG *arg;

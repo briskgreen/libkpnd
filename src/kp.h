@@ -24,22 +24,25 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_INFO *file
 int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_SHARE *file);
 
 //获取文件的历史版本
-int kp_get_file_histroy(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *his);
+int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *his);
 
-//创建文件夹
-int kp_create_file(KP *kp,KP_ARG *arg);
+/* 创建文件夹
+ * root app_folder或者kuaipan
+ * path 相对于root的路径，包含文件名
+ */
+int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path);
 
 //删除文件（夹）
-int kp_delete_file(KP *kp,KP_ARG *arg);
+int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path);
 
 //移动文件（夹）
-int kp_remove_file(KP *kp,KP_ARG *arg);
+int kp_remove_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path);
 
 //复制文件（夹）
-int kp_copy_file(KP *kp,KP_ARG *arg);
+int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path);
 
 //复制引用
-int kp_copy_ref(KP *kp,KP_ARG *arg,char *root,char *path);
+int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path);
 
 /* 上传文件
  * func为进度函数
