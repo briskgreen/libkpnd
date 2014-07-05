@@ -664,7 +664,7 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	curl_easy_setopt(curl,CURLOPT_WRITEDATA,*res);
 	if(func)
 	{
-		curl_easy_setopt(curl,CURLOPT_NOPROGRESS,0L);
+		curl_easy_setopt(curl,CURLOPT_NOPROGRESS,false);
 		curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION,func);
 		curl_easy_setopt(curl,CURLOPT_PROGRESSDATA,data);
 	}
@@ -702,7 +702,7 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 }
 
 int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
-		char *filename,kp_progress func,void *data);
+		char *filename,kp_progress func,void *data)
 {
 	char *arg_url;
 	char *url;
@@ -762,6 +762,12 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,"/dev/null");
 	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"/dev/null");
 #endif
+	if(func)
+	{
+		curl_easy_setopt(curl,CURLOPT_NOPROGRESS,false);
+		curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION,func);
+		curl_easy_setopt(curl,CURLOPT_PROGRESSDATA,data);
+	}
 	curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,true);
 	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_save_to_file);
 	curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
