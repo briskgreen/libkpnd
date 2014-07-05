@@ -19,6 +19,7 @@ void object_int64_get(json_object *obj,uint64_t *res,char *key);
 KP_FILE_NODE *init_kp_file_node(void);
 //libcurl获取返回数据的回调函数
 size_t kp_get_data(char *ptr,size_t size,size_t nmemb,KP_RET *data);
+size_t kp_save_to_file(char *ptr,size_t size,size_t nmemb,FILE *fp);
 
 int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 {
@@ -700,6 +701,100 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	}
 }
 
+int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
+		char *filename,kp_progress func,void *data);
+{
+	char *arg_url;
+	char *url;
+	char *key;
+	char *base="http://api-content.dfs.kuaipan.cn/1/fileops/download_file";
+	FILE *fp;
+	int len;
+	CURL *curl;
+	CURLcode code;
+	long httpcode;
+	json_object *obj;
+
+	if(access(filename,F_OK) == -1)
+	{
+		if((fp=fopen(filename,"wb")) == NULL)
+			return KP_ERROR_CREATE_FILE;
+	}
+	else
+		return KP_ERROR_FILE_ALREADY_EXISTS;
+
+	kp_oauth_update_timestamp(arg);
+	kp_oauth_update_once(arg);
+	kp_arg_add(arg,"root",root);
+	kp_arg_add(arg,"path",path);
+
+	key=kp_get_oauth_key(kp,"GET",base,arg);
+	if(key == NULL)
+	{
+		fclose(fp);
+		return KP_ERROR_NO_MEM;
+	}
+	kp_oauth_update_signature(arg,key);
+	free(key);
+
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
+	{
+		fclose(fp);
+		return KP_ERROR_ARG;
+	}
+	len=sizeof(char)*(strlen(base)+strlen(arg_url)+1);
+	if((url=malloc(len)) == NULL)
+	{
+		free(arg_url);
+		fclose(fp);
+		return KP_ERROR_ARG;
+	}
+	snprintf(url,len,"%s?%s",base,arg_url);
+	free(arg_url);
+
+	curl=curl_easy_init();
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+#ifdef _WIN32
+	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,NULL);
+	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,NULL);
+#else
+	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,"/dev/null");
+	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"/dev/null");
+#endif
+	curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,true);
+	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_save_to_file);
+	curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
+
+	code=curl_easy_perform(curl);
+	curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&httpcode);
+	curl_easy_cleanup(curl);
+	free(url);
+	fclose(fp);
+
+	if(code != 0)
+	{
+		remove(filename);
+		return code;
+	}
+
+	if(httpcode == 200)
+		return 0;
+
+	obj=json_object_from_file(filename);
+	if(obj == NULL)
+	{
+		remove(filename);
+		return KP_ERROR_DOWNLOAD_FILE;
+	}
+
+	object_get_err(obj,&kp->errmsg);
+	json_object_put(obj);
+	remove(filename);
+
+	return KP_ERROR_DOWNLOAD_FILE;
+}
+
 int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)
 {
 	json_object *obj;
@@ -1003,4 +1098,9 @@ size_t kp_get_data(char *ptr,size_t size,size_t nmemb,KP_RET *data)
 	data->len+=nmemb;
 
 	return nmemb;
+}
+
+size_t kp_save_to_file(char *ptr,size_t size,size_t nmemb,FILE *fp)
+{
+	return fwrite(ptr,size,nmemb,fp);
 }
