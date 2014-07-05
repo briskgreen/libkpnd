@@ -1,5 +1,11 @@
 #include "kp.h"
 
+typedef struct
+{
+	size_t len;
+	char *data;
+}KP_RET;
+
 int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data);
 int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data);
 int _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data);
@@ -11,6 +17,8 @@ void object_int_get(json_object *obj,uint32_t *res,char *key);
 void object_int64_get(json_object *obj,uint64_t *res,char *key);
 
 KP_FILE_NODE *init_kp_file_node(void);
+//libcurl获取返回数据的回调函数
+size_t kp_get_data(char *ptr,size_t size,size_t nmemb,KP_RET *data);
 
 int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 {
@@ -531,6 +539,167 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	}
 }
 
+char *kp_get_upload_url(KP *kp,KP_ARG *arg)
+{
+	char *url;
+	char *res;
+	char *arg_url;
+	char *key;
+	char *base="http://api-content.dfs.kuaipan.cn/1/fileops/upload_locate";
+	int len;
+	json_object *obj;
+
+	kp_oauth_update_timestamp(arg);
+	kp_oauth_update_once(arg);
+	key=kp_get_oauth_key(kp,"GET",base,arg);
+	if(key == NULL)
+		return NULL;
+
+	kp_oauth_update_signature(arg,key);
+	free(key);
+
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
+		return NULL;
+
+	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
+	if((url=malloc(len)) == NULL)
+	{
+		free(arg_url);
+		return NULL;
+	}
+	snprintf(url,len,"%s?%s",base,arg_url);
+	free(arg_url);
+
+	res=oauth_http_get(url,NULL);
+	free(url);
+	if(res == NULL)
+		return NULL;
+
+	obj=json_tokener_paser(res);
+	if(obj == NULL)
+	{
+		free(res);
+		return NULL;
+	}
+
+	if(object_get_err(obj,&kp->errmsg))
+	{
+		json_object_put(obj);
+		free(res);
+
+		return NULL;
+	}
+	else
+	{
+		object_string_get(obj,&url,"url");
+		json_object_put(obj);
+		free(res);
+
+		return url;
+	}
+}
+
+int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
+		kp_progress func,void *data)
+{
+	char *url;
+	CURL *curl;
+	int len;
+	char *key;
+	char *base;
+	char *arg_url;
+	KP_RET res;
+	CURLcode code;
+	struct curl_httppost *post=NULL,*last=NULL;
+	json_object *obj;
+
+	url=kp_get_upload_url(kp,arg);
+	if(url == NULL)
+		return KP_ERROR_UPLOAD_URL;
+	len=sizeof(char)*(strlen(url)+strlen("/1/fileops/upload_file")+1);
+	if((base=malloc(len)) == NULL)
+	{
+		free(url);
+		return KP_ERROR_NO_MEM;
+	}
+	snprintf(base,len,"%s%s",url,base);
+	free(url);
+	kp_oauth_update_timestamp(arg);
+	kp_oauth_update_once(arg);
+	key=kp_get_oauth_key(kp,"POST",base,arg);
+	if(key == NULL)
+	{
+		free(base);
+		return KP_ERROR_ARG;
+	}
+	kp_oauth_update_signature(arg,key);
+	free(key);
+
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
+	{
+		free(base);
+		return KP_ERROR_ARG;
+	}
+	len+=sizeof(char)*(strlen(arg_url)+1);
+	if((url=malloc(len)) == NULL)
+	{
+		free(base);
+		return KP_ERROR_NO_MEM;
+	}
+	snprintf(url,len,"%s?%s",base,arg_url);
+	free(arg_url);
+	free(base);
+
+	curl_formadd(&post,&last,CURLFORM_COPYNAME,"file",CURLFORM_FILE,filename,CURLFORM_END);
+	res.len=0;
+	res.data=NULL;
+
+	curl=curl_easy_init();
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl,CURLOPT_HTTPPOST,post);
+	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_get_data);
+	curl_easy_setopt(curl,CURLOPT_WRITEDATA,*res);
+	if(func)
+	{
+		curl_easy_setopt(curl,CURLOPT_NOPROGRESS,0L);
+		curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION,func);
+		curl_easy_setopt(curl,CURLOPT_PROGRESSDATA,data);
+	}
+
+	code=curl_easy_perform(curl);
+	curl_easy_cleanup(curl);
+	curl_formfree(post);
+	free(url);
+
+	if(code != 0)
+		return code;
+
+	obj=json_tokener_paser(res.data);
+	if(obj == NULL)
+	{
+		if(res.data)
+			free(res.data);
+		return KP_ERROR_UPLOAD_FILE;
+	}
+
+	if(object_get_err(obj,&kp->errmsg))
+	{
+		json_object_put(obj);
+		free(res.data);
+
+		return KP_ERROR_UPLOAD_FILE;
+	}
+	else
+	{
+		json_object_put(obj);
+		free(res.data);
+
+		return 0;
+	}
+}
+
 int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)
 {
 	json_object *obj;
@@ -824,4 +993,14 @@ KP_FILE_NODE *init_kp_file_node(void)
 	node->is_deleted=false;
 
 	return node;
+}
+
+size_t kp_get_data(char *ptr,size_t size,size_t nmemb,KP_RET *data)
+{
+	data->data=realloc(data->data,sizeof(char)*(data->len+nmemb+1));
+	snprintf(data->data+data->len,sizeof(char)*(nmemb+1),"%s",ptr);
+
+	data->len+=nmemb;
+
+	return nmemb;
 }

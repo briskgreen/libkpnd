@@ -44,14 +44,19 @@ int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path);
 //复制引用
 int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path);
 
+//获取上传文件的地址
+char *kp_get_upload_url(KP *kp,KP_ARG *arg);
+
 /* 上传文件
  * func为进度函数
  * data为func函数的参数
  */
-int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,kp_progress func,void *data);
+int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
+		kp_progress func,void *data);
 
 //下载文件
-int kp_download_file(KP *kp,KP_ARG *arg,char *filename,kp_progress func,void *data);
+int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
+		char *filename,kp_progress func,void *data);
 
 //获取缩略图
 int kp_get_thumbnail(KP *kp,KP_ARG *arg,char *filename);
