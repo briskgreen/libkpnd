@@ -16,4 +16,5 @@
 *.out
 *.app
 
-src/t*
+src/t 
+src/t.c
