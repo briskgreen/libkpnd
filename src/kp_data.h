@@ -11,6 +11,11 @@
 #include <stdbool.h>
 #include <json/json.h>
 
+/*
+ * 枚举变量
+ */
+enum TYPE {folder,file};
+
 /* 快盘API接口参数链表
  * key为参数名称
  * value为参数值
@@ -81,7 +86,8 @@ typedef struct
 typedef struct kp_file_node 
 {
 	char *file_id;
-	enum TYPE {folder,file}type;
+	enum TYPE type;
+//	enum TYPE {folder,file}type;
 	uint32_t size;
 	char *create_time;
 	char *modify_time;
@@ -113,7 +119,8 @@ typedef struct kp_file_info
 	char *root;
 	char hash[32];
 	char *file_id;
-	enum TYPE {folder,file}type;
+	enum TYPE type;
+//	enum TYPE {folder,file}type;
 	uint32_t size;
 	char *create_time;
 	char *modify_time;

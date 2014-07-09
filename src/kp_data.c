@@ -46,8 +46,8 @@ KP *kp_init(char *key,char *secret,char *oauth_token,char *oauth_secret)
 		kp->oauth_secret=strdup(oauth_secret);
 	else
 		kp->oauth_secret=NULL;
-	kp->oauth_callback=false;
-	kp->oauth_verifier=NULL;
+//	kp->oauth_callback=false;
+//	kp->oauth_verifier=NULL;
 	kp->errmsg=NULL;
 
 	return kp;
@@ -59,7 +59,7 @@ void kp_free(KP *kp)
 	NULL_NOT_FREE(kp->secret);
 	NULL_NOT_FREE(kp->oauth_token);
 	NULL_NOT_FREE(kp->oauth_secret);
-	NULL_NOT_FREE(kp->oauth_verifier);
+	//NULL_NOT_FREE(kp->oauth_verifier);
 	NULL_NOT_FREE(kp->errmsg);
 	free(kp);
 }
@@ -268,7 +268,7 @@ char *kp_arg_get_url(KP_VALUE *head)
 			return NULL;
 		}
 
-		snprintf(res+arg_len,sizeof(char)*(len+2-arg_len),"%s=%s&",head->key,head->value);
+		snprintf(url+arg_len,sizeof(char)*(len+2-arg_len),"%s=%s&",head->key,head->value);
 		head=head->next;
 	}
 
