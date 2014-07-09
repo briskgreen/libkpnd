@@ -259,16 +259,16 @@ char *kp_arg_get_url(KP_VALUE *head)
 	while(head)
 	{
 		arg_len=len;
-		len+=strlen(head->key)+strlen(head->value)+1;
+		len+=strlen(head->key)+strlen(head->value)+2;
 
-		url=realloc(url,sizeof(char)*len+2);
+		url=realloc(url,sizeof(char)*(len+1));
 		if(url == NULL)
 		{
 			kp_errno=KP_ERROR_NO_MEM;
 			return NULL;
 		}
 
-		snprintf(url+arg_len,sizeof(char)*(len+2-arg_len),"%s=%s&",head->key,head->value);
+		snprintf(url+arg_len,sizeof(char)*(len+1-arg_len),"%s=%s&",head->key,head->value);
 		head=head->next;
 	}
 
