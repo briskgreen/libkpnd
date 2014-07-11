@@ -480,7 +480,7 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/copy_ref/")+strlen(root)+strlen(path)+2);
 	if((base=malloc(len)) == NULL)
-		return KP_ERROR_NO;
+		return KP_ERROR_NO_MEM;
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/copy_ref/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_once(arg);
@@ -799,6 +799,230 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	remove(filename);
 
 	return KP_ERROR_DOWNLOAD_FILE;
+}
+
+int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
+		char *root,char *path,char *filename)
+{
+	CURL *curl;
+	char *arg_url;
+	char *url;
+	char *key;
+	char *base="http://conv.kuaipan.cn/1/fileops/thumbnail";
+	int len;
+	json_object *obj;
+	char v_width[20];
+	char v_height[20];
+	CURLcode code;
+	long httpcode;
+	FILE *fp;
+
+	if(access(filename,F_OK) == -1)
+	{
+		if((fp=fopen(filename,"wb")) == NULL)
+			return KP_ERROR_CREATE_FILE;
+	}
+	else
+		return KP_ERROR_FILE_ALREADY_EXISTS;
+
+	kp_oauth_update_timestamp(arg);
+	kp_oauth_update_once(arg);
+	kp_arg_add(arg,"root",root);
+	kp_arg_add(arg,"path",path);
+	snprintf(v_width,sizeof(v_width),"%d",width);
+	snprintf(v_height,sizeof(v_height),"%d",height);
+	kp_arg_add(arg,"width",v_width);
+	kp_arg_add(arg,"height",v_height);
+
+	key=kp_get_oauth_key(kp,"GET",base,arg);
+	if(key == NULL)
+		return KP_ERROR_NO_MEM;
+	kp_oauth_update_signature(arg,key);
+	free(key);
+
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
+		return KP_ERROR_ARG;
+
+	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
+	if((url=malloc(len)) == NULL)
+	{
+		free(arg_url);
+		return KP_ERROR_NO_MEM;
+	}
+	snprintf(url,len,"%s?%s",base,arg_url);
+	free(arg_url);
+
+	curl=curl_easy_init();
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_download_file);
+	curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
+
+	code=curl_easy_perform(curl);
+	curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&httpcode);
+	curl_easy_cleanup(curl);
+	fclose(fp);
+	free(url);
+
+	if(code != 0)
+		return code;
+
+	if(httpcode == 200)
+		return 0;
+
+	obj=json_object_from_file(filename);
+	if(obj == NULL)
+	{
+		remove(filename);
+		return KP_ERROR_THUMBNAIL;
+	}
+
+	object_get_err(obj,&kp->errmsg);
+	json_object_put(obj);
+	remove(filename);
+
+	return KP_ERROR_THUMBNAIL;
+}
+
+int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
+		enum KP_VIEW view,char *root,char *path,
+		char *filename)
+{
+	CURL *curl;
+	char *arg_url;
+	char *url;
+	char *key;
+	char *base="http://conv.kuaipan.cn/1/fileops/documentView";
+	int len;
+	json_object *obj;
+	char *v_type;
+	char *v_view;
+	CURLcode code;
+	long httpcode;
+	FILE *fp;
+
+	if(access(filename,F_OK) == -1)
+	{
+		if((fp=fopen(filename,"wb")) == NULL)
+			return KP_ERROR_CREATE_FILE;
+	}
+	else
+		return KP_ERROR_FILE_ALREADY_EXISTS;
+
+	switch(type)
+	{
+		case pdf:
+			v_type="pdf";
+			break;
+		case doc:
+			v_type="doc";
+			break;
+		case wps:
+			v_type="wps";
+			break;
+		case csv:
+			v_type="csv";
+			break;
+		case prn:
+			v_type="prn";
+			break;
+		case xls:
+			v_type="xls";
+			break;
+		case et:
+			v_type="et";
+			break;
+		case ppt:
+			v_type="ppt";
+			break;
+		case dps:
+			v_type="dps";
+			break;
+		case txt:
+			v_type="txt";
+			break;
+		case rtf:
+			v_type="rtf";
+			break;
+
+		default:
+			return KP_ERROR_CHANGE_TYPE;
+	}
+
+	switch(view)
+	{
+		case normal:
+			v_view="normal";
+			break;
+		case android:
+			v_view="android";
+			break;
+		case iPad:
+			v_view="iPad";
+			break;
+		case iphone:
+			v_view="iphone";
+			break;
+
+		default:
+			return KP_ERROR_CHANGE_VIEW;
+	}
+
+	kp_oauth_update_timestamp(arg);
+	kp_oauth_update_once(arg);
+	kp_arg_add(arg,"root",root);
+	kp_arg_add(arg,"path",path);
+	kp_arg_add(arg,"type",v_type);
+	kp_arg_add(arg,"view",v_view);
+
+	key=kp_get_oauth_key(kp,"GET",base,arg);
+	if(key == NULL)
+		return KP_ERROR_NO_MEM;
+	kp_oauth_update_signature(arg,key);
+	free(key);
+
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
+		return KP_ERROR_ARG;
+
+	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
+	if((url=malloc(len)) == NULL)
+	{
+		free(arg_url);
+		return KP_ERROR_NO_MEM;
+	}
+	snprintf(url,len,"%s?%s",base,arg_url);
+	free(arg_url);
+
+	curl=curl_easy_init();
+	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_download_file);
+	curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
+
+	code=curl_easy_perform(curl);
+	curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&httpcode);
+	curl_easy_cleanup(curl);
+	fclose(fp);
+	free(url);
+
+	if(code != 0)
+		return code;
+
+	if(httpcode == 200)
+		return 0;
+
+	obj=json_object_from_file(filename);
+	if(obj == NULL)
+	{
+		remove(filename);
+		return KP_ERROR_DOC_CHANGE;
+	}
+
+	object_get_err(obj,&kp->errmsg);
+	json_object_put(obj);
+	remove(filename);
+
+	return KP_ERROR_DOC_CHANGE;
 }
 
 int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)

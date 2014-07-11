@@ -18,13 +18,16 @@ typedef curl_progress_callback kp_progress;
 int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user);
 
 //获取文件（夹）信息
-int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_INFO *file);
+int kp_get_file_info(KP *kp,KP_ARG *arg,
+		char *root,char *path,KP_FILE_INFO *file);
 
 //获取文件分享链接
-int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_SHARE *file);
+int kp_get_file_share(KP *kp,KP_ARG *arg,
+		char *root,char *path,KP_FILE_SHARE *file);
 
 //获取文件的历史版本
-int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *his);
+int kp_get_file_history(KP *kp,KP_ARG *arg,
+		char *root,char *path,KP_FILE_HIS *his);
 
 /* 创建文件夹
  * root app_folder或者kuaipan
@@ -36,10 +39,12 @@ int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path);
 int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path);
 
 //移动文件（夹）
-int kp_remove_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path);
+int kp_remove_file(KP *kp,KP_ARG *arg,
+		char *root,char *from_path,char *to_path);
 
 //复制文件（夹）
-int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path);
+int kp_copy_file(KP *kp,KP_ARG *arg,
+		char *root,char *from_path,char *to_path);
 
 //复制引用
 int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path);
@@ -58,10 +63,24 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 		char *filename,kp_progress func,void *data);
 
-//获取缩略图
-int kp_get_thumbnail(KP *kp,KP_ARG *arg,char *filename);
+/* 
+ * 获取缩略图
+ * width 宽度
+ * height 高度
+ * filename 保存的文件名
+ */
+int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
+		char *root,char *path,char *filename);
 
-//文档转换
-int kp_doc_change(KP *kp,KP_ARG *arg,char *filename);
+/*
+ * 文档转换
+ * type 文档类型，参数如下:
+ * pdf、doc、wps、csv、prn、xls、et、ppt、dps、txt、rtf
+ * view 视图格式，参数可取normal、android、iPad、iphone
+ * filename 文件的保存路径
+ */
+int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
+		enum KP_VIEW view,char *root,char *path,
+		char *filename);
 
 #endif

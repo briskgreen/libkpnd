@@ -5,8 +5,7 @@
 #ifndef _KP_DATA_H
 #define _KP_DATA_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "kp_errno.h"
 #include <string.h>
 #include <stdbool.h>
 #include <json/json.h>
@@ -14,7 +13,9 @@
 /*
  * 枚举变量
  */
-enum TYPE {folder,file};
+enum KP_TYPE {folder,file};
+enum KP_CH_TYPE {pdf,doc,wps,csv,prn,xls,et,ppt,dps,txt,rtf};
+enum KP_VIEW {normal,android,iPad,iphone};
 
 /* 快盘API接口参数链表
  * key为参数名称
@@ -86,7 +87,7 @@ typedef struct
 typedef struct kp_file_node 
 {
 	char *file_id;
-	enum TYPE type;
+	enum KP_TYPE type;
 //	enum TYPE {folder,file}type;
 	uint32_t size;
 	char *create_time;
@@ -119,7 +120,7 @@ typedef struct kp_file_info
 	char *root;
 	char hash[32];
 	char *file_id;
-	enum TYPE type;
+	enum KP_TYPE type;
 //	enum TYPE {folder,file}type;
 	uint32_t size;
 	char *create_time;
@@ -162,13 +163,6 @@ typedef struct
 	char *copy_ref;
 	char *expires;
 }KP_REF;
-
-//保存错误代码
-int kp_errno;
-
-#define KP_ERROR_NO_MEM -1
-#define KP_ERROR_KEY -2
-#define KP_ERROR_SECRET -3
 
 /* 初始化KP
  * key为consumer_key
