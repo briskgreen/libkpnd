@@ -143,13 +143,13 @@ bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 	char *base;
 	int len;
 
-	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/shares/")+strlen(root)+strlen(path)+2);
+	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/shares/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
-	snprintf(base,len,"http://openapi.kuaipan.cn/1/shares/%s/%s",root,path);
+	snprintf(base,len,"http://openapi.kuaipan.cn/1/shares/%s%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
@@ -202,13 +202,13 @@ bool kp_get_file_history(KP *kp,KP_ARG *arg,
 	char *base;
 	int len;
 
-	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/history/")+strlen(root)+strlen(path)+2);
+	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/history/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
-	snprintf(base,len,"http://openapi.kuaipan.cn/1/history/%s/%s",root,path);
+	snprintf(base,len,"http://openapi.kuaipan.cn/1/history/%s%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
@@ -229,7 +229,7 @@ bool kp_get_file_history(KP *kp,KP_ARG *arg,
 		return false;
 	}
 
-	len+=sizeof(char)*(strlen(arg_url+1));
+	len+=sizeof(char)*(strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(base);
@@ -566,13 +566,13 @@ bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	int len;
 	json_object *obj;
 
-	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/copy_ref/")+strlen(root)+strlen(path)+2);
+	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/copy_ref/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
-	snprintf(base,len,"http://openapi.kuaipan.cn/1/copy_ref/%s/%s",root,path);
+	snprintf(base,len,"http://openapi.kuaipan.cn/1/copy_ref/%s%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
@@ -1288,7 +1288,7 @@ bool _kp_get_file_info(KP *kp,KP_FILE_INFO *_file,char *data)
 
 	files=json_object_object_get(obj,"files");
 	len=json_object_array_length(files);
-	if(len < 0)
+	if(len <= 0)
 	{
 		json_object_put(files);
 		json_object_put(obj);
@@ -1387,6 +1387,10 @@ bool _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data)
 {
 	json_object *obj;
 	json_object *files;
+	json_object *items;
+	KP_FILE_HIS *node;
+	int len;
+	int i;
 
 	obj=json_tokener_parse(data);
 	if(obj == NULL)
@@ -1407,9 +1411,50 @@ bool _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data)
 	}
 
 	files=json_object_object_get(obj,"files");
-	object_string_get(files,&his->file_id,"file_id");
-	object_string_get(files,&his->rev,"rev");
-	object_string_get(files,&his->create_time,"create_time");
+	len=json_object_array_length(files);
+	if(len <= 0)
+	{
+		json_object_put(files);
+		json_object_put(obj);
+		free(data);
+		
+		kp_errno=KP_ERROR_FILE_HISTORY;
+		return false;
+	}
+
+	for(i=0;i < len;++i)
+	{
+		items=json_object_array_get_idx(files,i);
+
+		node=malloc(sizeof(KP_FILE_HIS));
+		if(node == NULL)
+			continue;
+
+		node->file_id=NULL;
+		node->rev=NULL;
+		node->create_time=NULL;
+		node->next=NULL;
+
+		object_string_get(items,&node->file_id,"file_id");
+		object_string_get(items,&node->rev,"rev");
+		object_string_get(items,&node->create_time,"create_time");
+
+		if(i == 0)
+		{
+			his->file_id=node->file_id;
+			his->rev=node->rev;
+			his->create_time=node->create_time;
+			his->next=NULL;
+			free(node);
+		}
+		else
+		{
+			his->next=node;
+			his=his->next;
+		}
+
+		json_object_put(items);
+	}
 
 	json_object_put(files);
 	json_object_put(obj);

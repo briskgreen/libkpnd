@@ -74,6 +74,8 @@ typedef struct
 }KP_USER_INFO;
 
 /* 文件信息
+ * sha1:文件哈希值
+ * share_id:共享ID
  * file_id:文件唯一标识id
  * type:folder为文件夹，file为文件。
  * size:文件大小
@@ -147,12 +149,15 @@ typedef struct
  * file_id:文件id 
  * rev:文件版本
  * create_time:YYYY-MM-DD hh:mm:ss该版本被覆盖的时间。
+ * next:下一个版本
  */
 typedef struct kp_file_his
 {
 	char *file_id;
 	char *rev;
 	char *create_time;
+
+	struct kp_file_his *next;
 }KP_FILE_HIS;
 
 /* 复制引用数据结构

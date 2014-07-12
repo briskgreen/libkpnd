@@ -108,10 +108,19 @@ void kp_file_share_free(KP_FILE_SHARE *file)
 
 void kp_file_his_free(KP_FILE_HIS *file)
 {
-	NULL_NOT_FREE(file->file_id);
-	NULL_NOT_FREE(file->rev);
-	NULL_NOT_FREE(file->create_time);
-	free(file);
+	KP_FILE_HIS *temp;
+
+	while(file)
+	{
+		temp=file;
+
+		NULL_NOT_FREE(file->file_id);
+		NULL_NOT_FREE(file->rev);
+		NULL_NOT_FREE(file->create_time);
+
+		file=file->next;
+		free(temp);
+	}
 }
 
 void kp_ref_free(KP_REF *ref)
@@ -142,7 +151,10 @@ bool kp_arg_add(KP_ARG *arg,char *key,char *value)
 	KP_VALUE *data;
 
 	if(kp_arg_in(arg,key))
+	{
+		kp_arg_update(arg,key,value);
 		return false;
+	}
 
 	data=malloc(sizeof(KP_VALUE));
 	if(data == NULL)
@@ -327,6 +339,7 @@ bool _kp_arg_update(KP_VALUE *head,char *key,char *value)
 	{
 		free(head->value);
 		head->value=strdup(value);
+		return true;
 	}
 
 	return false;
