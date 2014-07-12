@@ -7,6 +7,7 @@
 #define _KP_H
 
 #include "kp_oauth.h"
+#include <unistd.h>
 #include <curl/curl.h>
 
 typedef curl_progress_callback kp_progress;
@@ -15,39 +16,39 @@ typedef curl_progress_callback kp_progress;
  * 发生错误时返回错误代码
  * 结果保存在user中
  */
-int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user);
+bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user);
 
 //获取文件（夹）信息
-int kp_get_file_info(KP *kp,KP_ARG *arg,
+bool kp_get_file_info(KP *kp,KP_ARG *arg,
 		char *root,char *path,KP_FILE_INFO *file);
 
 //获取文件分享链接
-int kp_get_file_share(KP *kp,KP_ARG *arg,
+bool kp_get_file_share(KP *kp,KP_ARG *arg,
 		char *root,char *path,KP_FILE_SHARE *file);
 
 //获取文件的历史版本
-int kp_get_file_history(KP *kp,KP_ARG *arg,
+bool kp_get_file_history(KP *kp,KP_ARG *arg,
 		char *root,char *path,KP_FILE_HIS *his);
 
 /* 创建文件夹
  * root app_folder或者kuaipan
  * path 相对于root的路径，包含文件名
  */
-int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path);
+bool kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path);
 
 //删除文件（夹）
-int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path);
+bool kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path);
 
 //移动文件（夹）
-int kp_remove_file(KP *kp,KP_ARG *arg,
+bool kp_remove_file(KP *kp,KP_ARG *arg,
 		char *root,char *from_path,char *to_path);
 
 //复制文件（夹）
-int kp_copy_file(KP *kp,KP_ARG *arg,
+bool kp_copy_file(KP *kp,KP_ARG *arg,
 		char *root,char *from_path,char *to_path);
 
 //复制引用
-int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path);
+bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path);
 
 //获取上传文件的地址
 char *kp_get_upload_url(KP *kp,KP_ARG *arg);
@@ -56,11 +57,11 @@ char *kp_get_upload_url(KP *kp,KP_ARG *arg);
  * func为进度函数
  * data为func函数的参数
  */
-int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
+bool kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 		kp_progress func,void *data);
 
 //下载文件
-int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
+bool kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 		char *filename,kp_progress func,void *data);
 
 /* 
@@ -69,7 +70,7 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
  * height 高度
  * filename 保存的文件名
  */
-int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
+bool kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 		char *root,char *path,char *filename);
 
 /*
@@ -79,7 +80,7 @@ int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
  * view 视图格式，参数可取normal、android、iPad、iphone
  * filename 文件的保存路径
  */
-int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
+bool kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 		enum KP_VIEW view,char *root,char *path,
 		char *filename);
 

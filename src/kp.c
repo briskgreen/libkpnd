@@ -6,12 +6,12 @@ typedef struct
 	char *data;
 }KP_RET;
 
-int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data);
-int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data);
-int _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data);
-int _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data);
+bool _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data);
+bool _kp_get_file_info(KP *kp,KP_FILE_INFO *_file,char *data);
+bool _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data);
+bool _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data);
 
-int object_get_err(json_object *obj,char **res);
+bool object_get_err(json_object *obj,char **res);
 void object_string_get(json_object *obj,char **res,char *key);
 void object_int_get(json_object *obj,uint32_t *res,char *key);
 void object_int64_get(json_object *obj,uint64_t *res,char *key);
@@ -21,7 +21,7 @@ KP_FILE_NODE *init_kp_file_node(void);
 size_t kp_get_data(char *ptr,size_t size,size_t nmemb,KP_RET *data);
 size_t kp_save_to_file(char *ptr,size_t size,size_t nmemb,FILE *fp);
 
-int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
+bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 {
 	char *res;
 	char *arg_url;
@@ -35,20 +35,27 @@ int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	url=malloc(len);
 	if(url == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 
 	snprintf(url,len,"%s?%s",base,arg_url);
@@ -58,12 +65,15 @@ int kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 	free(url);
 
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
 	return _kp_get_user_info(kp,user,res);
 }
 
-int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
+bool kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 		char *path,KP_FILE_INFO *file)
 {
 	char *key;
@@ -75,7 +85,10 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/metadata/")+strlen(root)+strlen(path)+2);
 	if((base=malloc(len)) == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/metadata/%s/%s",root,path);
 
 	kp_oauth_update_timestamp(arg);
@@ -84,7 +97,8 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 	if(key == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
@@ -93,14 +107,16 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 	if(arg_url == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 
 	len+=sizeof(char)*(strlen(arg_url)+1);
 	if((url=malloc(len)) == NULL)
 	{
 		free(base);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -109,12 +125,15 @@ int kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
 	return _kp_get_file_info(kp,file,res);
 }
 
-int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
+bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 		KP_FILE_SHARE *file)
 {
 	char *key;
@@ -126,7 +145,10 @@ int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/shares/")+strlen(root)+strlen(path)+2);
 	if((base=malloc(len)) == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/shares/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_once(arg);
@@ -134,7 +156,8 @@ int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 	if(key == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
@@ -143,14 +166,16 @@ int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 	if(arg_url == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 
 	len+=sizeof(char)*(strlen(arg_url)+1);
 	if((url=malloc(len)) == NULL)
 	{
 		free(base);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -159,12 +184,16 @@ int kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
 	return _kp_get_file_share(kp,file,res);
 }
 
-int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *his)
+bool kp_get_file_history(KP *kp,KP_ARG *arg,
+		char *root,char *path,KP_FILE_HIS *his)
 {
 	char *key;
 	char *res;
@@ -175,7 +204,10 @@ int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *hi
 
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/history/")+strlen(root)+strlen(path)+2);
 	if((base=malloc(len)) == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/history/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_once(arg);
@@ -183,7 +215,8 @@ int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *hi
 	if(key == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
@@ -192,14 +225,16 @@ int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *hi
 	if(arg_url == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 
 	len+=sizeof(char)*(strlen(arg_url+1));
 	if((url=malloc(len)) == NULL)
 	{
 		free(base);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -208,12 +243,15 @@ int kp_get_file_history(KP *kp,KP_ARG *arg,char *root,char *path,KP_FILE_HIS *hi
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
 	return _kp_get_file_history(kp,his,res);
 }
 
-int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
+bool kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
 {
 	char *res;
 	char *arg_url;
@@ -230,20 +268,27 @@ int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	url=malloc(len);
 	if(url == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 
 	snprintf(url,len,"%s?%s",base,arg_url);
@@ -252,13 +297,17 @@ int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
-	obj=json_tokener_paser(res);
+	obj=json_tokener_parse(res);
 	if(obj == NULL)
 	{
 		free(res);
-		return KP_ERROR_CREATE_FILE;
+		kp_errno=KP_ERROR_CREATE_FILE;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -266,18 +315,19 @@ int kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
 		json_object_put(obj);
 		free(res);
 
-		return KP_ERROR_CREATE_FILE;
+		kp_errno=KP_ERROR_CREATE_FILE;
+		return false;
 	}
 	else
 	{
 		json_object_put(obj);
 		free(res);
 
-		return 0;
+		return true;
 	}
 }
 
-int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path)
+bool kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path)
 {
 	char *res;
 	char *arg_url;
@@ -294,20 +344,27 @@ int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path)
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -315,13 +372,17 @@ int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path)
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
-	obj=json_tokener_paser(res);
+	obj=json_tokener_parse(res);
 	if(obj == NULL)
 	{
 		free(res);
-		return KP_ERROR_DELETE_FILE;
+		kp_errno=KP_ERROR_DELETE_FILE;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -329,18 +390,20 @@ int kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path)
 		json_object_put(obj);
 		free(res);
 
-		return KP_ERROR_DELETE_FILE;
+		kp_errno=KP_ERROR_DELETE_FILE;
+		return false;
 	}
 	else
 	{
 		json_object_put(obj);
 		free(res);
 
-		return 0;
+		return true;
 	}
 }
 
-int kp_remove_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
+bool kp_remove_file(KP *kp,KP_ARG *arg,
+		char *root,char *from_path,char *to_path)
 {
 	char *res;
 	char *arg_url;
@@ -358,20 +421,27 @@ int kp_remove_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -379,13 +449,17 @@ int kp_remove_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
-	obj=json_tokener_paser(res);
+	obj=json_tokener_parse(res);
 	if(obj == NULL)
 	{
 		free(res);
-		return KP_ERROR_REMOVE_FILE;
+		kp_errno=KP_ERROR_REMOVE_FILE;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -393,18 +467,20 @@ int kp_remove_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
 		json_object_put(obj);
 		free(res);
 
-		return KP_ERROR_REMOVE_FILE;
+		kp_errno=KP_ERROR_REMOVE_FILE;
+		return false;
 	}
 	else
 	{
 		json_object_put(obj);
 		free(res);
 
-		return 0;
+		return true;
 	}
 }
 
-int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
+bool kp_copy_file(KP *kp,KP_ARG *arg,
+		char *root,char *from_path,char *to_path)
 {
 	char *res;
 	char *arg_url;
@@ -422,20 +498,27 @@ int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -443,13 +526,17 @@ int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
-	obj=json_tokener_paser(res);
+	obj=json_tokener_parse(res);
 	if(obj == NULL)
 	{
 		free(res);
-		return KP_ERROR_COPY_FILE;
+		kp_errno=KP_ERROR_COPY_FILE;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -457,18 +544,19 @@ int kp_copy_file(KP *kp,KP_ARG *arg,char *root,char *from_path,char *to_path)
 		json_object_put(obj);
 		free(res);
 
-		return KP_ERROR_COPY_FILE;
+		kp_errno=KP_ERROR_COPY_FILE;
+		return false;
 	}
 	else
 	{
 		json_object_put(obj);
 		free(res);
 
-		return 0;
+		return true;
 	}
 }
 
-int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
+bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 {
 	char *key;
 	char *res;
@@ -480,7 +568,10 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/copy_ref/")+strlen(root)+strlen(path)+2);
 	if((base=malloc(len)) == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/copy_ref/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_once(arg);
@@ -488,7 +579,8 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	if(key == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
@@ -497,14 +589,16 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	if(arg_url == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 
 	len+=sizeof(char)*(strlen(arg_url)+1);
 	if((url=malloc(len)) == NULL)
 	{
 		free(base);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -513,13 +607,17 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	res=oauth_http_get(url,NULL);
 	free(url);
 	if(res == NULL)
-		return KP_ERROR_NET_GET;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
-	obj=json_tokener_paser(res);
+	obj=json_tokener_parse(res);
 	if(obj == NULL)
 	{
 		free(res);
-		return KP_ERROR_COPY_REF;
+		kp_errno=KP_ERROR_COPY_REF;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -527,7 +625,8 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 		json_object_put(obj);
 		free(res);
 		
-		return KP_ERROR_COPY_REF;
+		kp_errno=KP_ERROR_COPY_REF;
+		return false;
 	}
 	else
 	{
@@ -536,7 +635,7 @@ int kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 		json_object_put(obj);
 		free(res);
 
-		return 0;
+		return true;
 	}
 }
 
@@ -577,7 +676,7 @@ char *kp_get_upload_url(KP *kp,KP_ARG *arg)
 	if(res == NULL)
 		return NULL;
 
-	obj=json_tokener_paser(res);
+	obj=json_tokener_parse(res);
 	if(obj == NULL)
 	{
 		free(res);
@@ -601,7 +700,7 @@ char *kp_get_upload_url(KP *kp,KP_ARG *arg)
 	}
 }
 
-int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
+bool kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 		kp_progress func,void *data)
 {
 	char *url;
@@ -617,12 +716,16 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 
 	url=kp_get_upload_url(kp,arg);
 	if(url == NULL)
-		return KP_ERROR_UPLOAD_URL;
+	{
+		kp_errno=KP_ERROR_UPLOAD_URL;
+		return false;
+	}
 	len=sizeof(char)*(strlen(url)+strlen("/1/fileops/upload_file")+1);
 	if((base=malloc(len)) == NULL)
 	{
 		free(url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(base,len,"%s%s",url,base);
 	free(url);
@@ -632,7 +735,8 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	if(key == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
@@ -641,13 +745,15 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	if(arg_url == NULL)
 	{
 		free(base);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	len+=sizeof(char)*(strlen(arg_url)+1);
 	if((url=malloc(len)) == NULL)
 	{
 		free(base);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -661,7 +767,7 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	curl_easy_setopt(curl,CURLOPT_URL,url);
 	curl_easy_setopt(curl,CURLOPT_HTTPPOST,post);
 	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_get_data);
-	curl_easy_setopt(curl,CURLOPT_WRITEDATA,*res);
+	curl_easy_setopt(curl,CURLOPT_WRITEDATA,&res);
 	if(func)
 	{
 		curl_easy_setopt(curl,CURLOPT_NOPROGRESS,false);
@@ -675,14 +781,19 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	free(url);
 
 	if(code != 0)
-		return code;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
-	obj=json_tokener_paser(res.data);
+	obj=json_tokener_parse(res.data);
 	if(obj == NULL)
 	{
 		if(res.data)
 			free(res.data);
-		return KP_ERROR_UPLOAD_FILE;
+
+		kp_errno=KP_ERROR_UPLOAD_FILE;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -690,18 +801,19 @@ int kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 		json_object_put(obj);
 		free(res.data);
 
-		return KP_ERROR_UPLOAD_FILE;
+		kp_errno=KP_ERROR_UPLOAD_FILE;
+		return false;
 	}
 	else
 	{
 		json_object_put(obj);
 		free(res.data);
 
-		return 0;
+		return true;
 	}
 }
 
-int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
+bool kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 		char *filename,kp_progress func,void *data)
 {
 	char *arg_url;
@@ -718,10 +830,16 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	if(access(filename,F_OK) == -1)
 	{
 		if((fp=fopen(filename,"wb")) == NULL)
-			return KP_ERROR_CREATE_FILE;
+		{
+			kp_errno=KP_ERROR_CREATE_FILE;
+			return false;
+		}
 	}
 	else
-		return KP_ERROR_FILE_ALREADY_EXISTS;
+	{
+		kp_errno=KP_ERROR_FILE_ALREADY_EXISTS;
+		return false;
+	}
 
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_once(arg);
@@ -732,7 +850,8 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	if(key == NULL)
 	{
 		fclose(fp);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
@@ -741,14 +860,16 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	if(arg_url == NULL)
 	{
 		fclose(fp);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+1);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
 		fclose(fp);
-		return KP_ERROR_ARG;
+		kp_errno=KP_ERROR_ARG;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -781,27 +902,30 @@ int kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	if(code != 0)
 	{
 		remove(filename);
-		return code;
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
 	}
 
 	if(httpcode == 200)
-		return 0;
+		return true;
 
 	obj=json_object_from_file(filename);
 	if(obj == NULL)
 	{
 		remove(filename);
-		return KP_ERROR_DOWNLOAD_FILE;
+		kp_errno=KP_ERROR_DOWNLOAD_FILE;
+		return false;
 	}
 
 	object_get_err(obj,&kp->errmsg);
 	json_object_put(obj);
 	remove(filename);
 
-	return KP_ERROR_DOWNLOAD_FILE;
+	kp_errno=KP_ERROR_DOWNLOAD_FILE;
+	return false;
 }
 
-int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
+bool kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 		char *root,char *path,char *filename)
 {
 	CURL *curl;
@@ -820,10 +944,16 @@ int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 	if(access(filename,F_OK) == -1)
 	{
 		if((fp=fopen(filename,"wb")) == NULL)
-			return KP_ERROR_CREATE_FILE;
+		{
+			kp_errno=KP_ERROR_CREATE_FILE;
+			return false;
+		}
 	}
 	else
-		return KP_ERROR_FILE_ALREADY_EXISTS;
+	{
+		kp_errno=KP_ERROR_FILE_ALREADY_EXISTS;
+		return false;
+	}
 
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_once(arg);
@@ -836,19 +966,26 @@ int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -865,26 +1002,31 @@ int kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 	free(url);
 
 	if(code != 0)
-		return code;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
 	if(httpcode == 200)
-		return 0;
+		return true;
 
 	obj=json_object_from_file(filename);
 	if(obj == NULL)
 	{
 		remove(filename);
-		return KP_ERROR_THUMBNAIL;
+		kp_errno=KP_ERROR_THUMBNAIL;
+		return false;
 	}
 
 	object_get_err(obj,&kp->errmsg);
 	json_object_put(obj);
 	remove(filename);
 
-	return KP_ERROR_THUMBNAIL;
+	kp_errno=KP_ERROR_THUMBNAIL;
+	return false;
 }
 
-int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
+bool kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 		enum KP_VIEW view,char *root,char *path,
 		char *filename)
 {
@@ -904,10 +1046,16 @@ int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 	if(access(filename,F_OK) == -1)
 	{
 		if((fp=fopen(filename,"wb")) == NULL)
-			return KP_ERROR_CREATE_FILE;
+		{
+			kp_errno=KP_ERROR_CREATE_FILE;
+			return false;
+		}
 	}
 	else
-		return KP_ERROR_FILE_ALREADY_EXISTS;
+	{
+		kp_errno=KP_ERROR_FILE_ALREADY_EXISTS;
+		return false;
+	}
 
 	switch(type)
 	{
@@ -946,7 +1094,8 @@ int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 			break;
 
 		default:
-			return KP_ERROR_CHANGE_TYPE;
+			kp_errno=KP_ERROR_CHANGE_TYPE;
+			return false;
 	}
 
 	switch(view)
@@ -965,7 +1114,8 @@ int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 			break;
 
 		default:
-			return KP_ERROR_CHANGE_VIEW;
+			kp_errno=KP_ERROR_CHANGE_VIEW;
+			return false;
 	}
 
 	kp_oauth_update_timestamp(arg);
@@ -977,19 +1127,26 @@ int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
-		return KP_ERROR_NO_MEM;
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	kp_oauth_update_signature(arg,key);
 	free(key);
 
 	arg_url=kp_arg_get_url(arg->arg);
 	if(arg_url == NULL)
-		return KP_ERROR_ARG;
+	{
+		kp_errno=KP_ERROR_ARG;
+		return false;
+	}
 
 	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
-		return KP_ERROR_NO_MEM;
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
 	}
 	snprintf(url,len,"%s?%s",base,arg_url);
 	free(arg_url);
@@ -1006,47 +1163,55 @@ int kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 	free(url);
 
 	if(code != 0)
-		return code;
+	{
+		kp_errno=KP_ERROR_NET_GET;
+		return false;
+	}
 
 	if(httpcode == 200)
-		return 0;
+		return true;
 
 	obj=json_object_from_file(filename);
 	if(obj == NULL)
 	{
 		remove(filename);
-		return KP_ERROR_DOC_CHANGE;
+		kp_errno=KP_ERROR_DOC_CHANGE;
+		return false;
 	}
 
 	object_get_err(obj,&kp->errmsg);
 	json_object_put(obj);
 	remove(filename);
 
-	return KP_ERROR_DOC_CHANGE;
+	kp_errno=KP_ERROR_DOC_CHANGE;
+	return false;
 }
 
-int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)
+bool _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)
 {
 	json_object *obj;
 
-	obj=json_tokener_paser(data);
+	obj=json_tokener_parse(data);
 	if(obj == NULL)
 	{
 		free(data);
 
-		return KP_ERROR_USER_INFO;
+		kp_errno=KP_ERROR_USER_INFO;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
 	{
 		json_object_put(obj);
 		free(data);
-		return KP_ERROR_USER_INFO;
+
+		kp_errno=KP_ERROR_USER_INFO;
+		return false;
 	}
 
 	object_int_get(obj,&user->user_id,"user_id");
 	object_string_get(obj,&user->user_name,"user_name");
-	object_int64_get(obj,&user->max_file_size,"max_file_size");
+	object_int_get(obj,&user->max_file_size,"max_file_size");
 	object_int64_get(obj,&user->quota_total,"quota_total");
 	object_int64_get(obj,&user->quota_used,"quota_used");
 	object_int64_get(obj,&user->quota_recycled,"quota_recycled");
@@ -1054,10 +1219,10 @@ int _kp_get_user_info(KP *kp,KP_USER_INFO *user,char *data)
 	json_object_put(obj);
 	free(data);
 
-	return 0;
+	return true;
 }
 
-int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
+bool _kp_get_file_info(KP *kp,KP_FILE_INFO *_file,char *data)
 {
 	json_object *obj;
 	json_object *files;
@@ -1067,53 +1232,57 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 	int len;
 	int i;
 
-	file->files=NULL;
-	obj=json_tokener_paser(data);
+	_file->files=NULL;
+	obj=json_tokener_parse(data);
 	if(obj == NULL)
 	{
 		free(data);
-		return KP_ERROR_FILE_INFO;
+		kp_errno=KP_ERROR_FILE_INFO;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
 	{
 		json_object_put(obj);
 		free(data);
-		return KP_FILE_INFO;
+
+		kp_errno=KP_ERROR_FILE_INFO;
+		return false;
 	}
 
-	object_string_get(obj,&file->path,"path");
-	object_string_get(obj,&file->root,"root");
-	object_string_get(obj,&file->file_id,"file_id");
+	object_string_get(obj,&_file->path,"path");
+	object_string_get(obj,&_file->root,"root");
+	object_string_get(obj,&_file->file_id,"file_id");
 	res=json_object_object_get(obj,"hash");
 	if(res)
 	{
-		strncpy(file->hash,json_object_get_string(res),sizeof(char)*31);
-		file->hash[32]='\0';
+		strncpy(_file->hash,json_object_get_string(res),sizeof(char)*31);
+		_file->hash[32]='\0';
 
 		json_object_put(res);
 	}
 
-	res=json_object_get_string(obj,"type");
+	res=json_object_object_get(obj,"type");
 	if(res)
 	{
-		char *str=json_object_get_string(res);
+		char *str=(char *)json_object_get_string(res);
+
 		if(strcmp(str,"folder") == 0)
-			file->type=folder;
+			_file->type=folder;
 		else if(strcmp(str,"file") == 0)
-			file->type=file;
+			_file->type=file;
 
 		json_object_put(res);
 	}
-	object_int_get(obj,&file->size,"size");
-	object_string_get(obj,&file->create_time,"create_tile");
-	object_string_get(obj,&file->modity_time,"modity_time");
-	object_string_get(obj,&file->name,"name");
-	object_string_get(obj,&file->rev,"rev");
+	object_int_get(obj,&_file->size,"size");
+	object_string_get(obj,&_file->create_time,"create_tile");
+	object_string_get(obj,&_file->modify_time,"modify_time");
+	object_string_get(obj,&_file->name,"name");
+	object_string_get(obj,&_file->rev,"rev");
 	res=json_object_object_get(obj,"is_deleted");
 	if(res)
 	{
-		file->is_deleted=json_object_get_boolean(res);
+		_file->is_deleted=json_object_get_boolean(res);
 		json_object_put(res);
 	}
 
@@ -1124,10 +1293,12 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 		json_object_put(files);
 		json_object_put(obj);
 		free(data);
-		return KP_ERROR_FILE_INFO;
+
+		kp_errno=KP_ERROR_FILE_INFO;
+		return false;
 	}
 
-	head=file->files;
+	head=_file->files;
 	for(i=0;i < len;++i)
 	{
 		res=json_object_array_get_idx(files,i);
@@ -1140,7 +1311,7 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 		item=json_object_object_get(res,"type");
 		if(item)
 		{
-			char *str=json_object_get_string(item);
+			char *str=(char *)json_object_get_string(item);
 			if(strcmp(str,"folder") == 0)
 				node->type=folder;
 			else if(strcmp(str,"file") == 0)
@@ -1150,7 +1321,7 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 		}
 		object_int_get(res,&node->size,"size");
 		object_string_get(res,&node->create_time,"create_time");
-		object_string_get(res,&node->modity_time,"modity_time");
+		object_string_get(res,&node->modify_time,"modify_time");
 		object_string_get(res,&node->name,"name");
 		object_string_get(res,&node->rev,"rev");
 		item=json_object_object_get(res,"is_deleted");
@@ -1162,7 +1333,7 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 
 		if(head == NULL)
 		{
-			file->files=node;
+			_file->files=node;
 			head=node;
 		}
 		else
@@ -1177,25 +1348,27 @@ int _kp_get_file_info(KP *kp,KP_FILE_INFO *file,char *data)
 	json_object_put(obj);
 	free(data);
 
-	return 0;
+	return true;
 }
 
-int _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data)
+bool _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data)
 {
 	json_object *obj;
 
-	obj=json_tokener_paser(data);
+	obj=json_tokener_parse(data);
 	if(obj == NULL)
 	{
 		free(data);
-		return KP_ERROR_FILE_SHARE;
+		kp_errno=KP_ERROR_FILE_SHARE;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
 	{
 		json_object_put(obj);
 		free(data);
-		return KP_ERROR_FILE_SHARE;
+		kp_errno=KP_ERROR_FILE_SHARE;
+		return false;
 	}
 
 	object_string_get(obj,&file->url,"url");
@@ -1204,20 +1377,21 @@ int _kp_get_file_share(KP *kp,KP_FILE_SHARE *file,char *data)
 	json_object_put(obj);
 	free(data);
 
-	return 0;
+	return true;
 }
 
-int _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data)
+bool _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data)
 {
 	json_object *obj;
 	json_object *files;
 
-	obj=json_tokener_paser(data);
+	obj=json_tokener_parse(data);
 	if(obj == NULL)
 	{
 		free(data);
 
-		return KP_ERROR_FILE_HISTORY;
+		kp_errno=KP_ERROR_FILE_HISTORY;
+		return false;
 	}
 
 	if(object_get_err(obj,&kp->errmsg))
@@ -1225,7 +1399,8 @@ int _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data)
 		json_object_put(obj);
 		free(data);
 		
-		return KP_ERROR_FILE_HISTORY;
+		kp_errno=KP_ERROR_FILE_HISTORY;
+		return false;
 	}
 
 	files=json_object_object_get(obj,"files");
@@ -1237,10 +1412,10 @@ int _kp_get_file_history(KP *kp,KP_FILE_HIS *his,char *data)
 	json_object_put(obj);
 	free(data);
 
-	return 0;
+	return true;
 }
 
-int object_get_err(json_object *obj,char **res)
+bool object_get_err(json_object *obj,char **res)
 {
 	json_object *data;
 
@@ -1250,17 +1425,17 @@ int object_get_err(json_object *obj,char **res)
 		if(strcmp(json_object_get_string(data),"ok") == 0)
 		{
 			json_object_put(data);
-			return 0;
+			return false;
 		}
 
 		if(*res)
 			free(*res);
 		*res=strdup(json_object_get_string(data));
 		json_object_put(data);
-		return 1;
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
 void object_string_get(json_object *obj,char **res,char *key)
@@ -1270,7 +1445,7 @@ void object_string_get(json_object *obj,char **res,char *key)
 	data=json_object_object_get(obj,key);
 	if(data)
 	{
-		*res=json_object_get_string(data);
+		*res=(char *)json_object_get_string(data);
 		json_object_put(data);
 	}
 
@@ -1313,7 +1488,7 @@ KP_FILE_NODE *init_kp_file_node(void)
 	node->type=file;
 	node->size=0;
 	node->create_time=NULL;
-	node->modity_time=NULL;
+	node->modify_time=NULL;
 	node->rev=NULL;
 	node->is_deleted=false;
 
