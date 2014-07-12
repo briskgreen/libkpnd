@@ -6,7 +6,7 @@ char *kp_error(char *msg)
 	char *error_msg;
 	int len=0;
 
-	switch(kp_error)
+	switch(kp_errno)
 	{
 		case KP_ERROR_ACCESS_TOKEN:
 			error_msg="获取Access Token出错!\n";
