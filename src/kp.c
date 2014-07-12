@@ -31,7 +31,7 @@ bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 	int len;
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
@@ -83,16 +83,16 @@ bool kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 	char *base;
 	int len;
 
-	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/metadata/")+strlen(root)+strlen(path)+2);
+	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/metadata/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
-	snprintf(base,len,"http://openapi.kuaipan.cn/1/metadata/%s/%s",root,path);
+	snprintf(base,len,"http://openapi.kuaipan.cn/1/metadata/%s%s",root,path);
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
 	{
@@ -151,7 +151,7 @@ bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/shares/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
 	{
@@ -210,7 +210,7 @@ bool kp_get_file_history(KP *kp,KP_ARG *arg,
 	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/history/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
 	{
@@ -262,7 +262,7 @@ bool kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
 	json_object *obj;
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"path",path);
 
@@ -338,7 +338,7 @@ bool kp_delete_file(KP *kp,KP_ARG *arg,char *root,char *path)
 	json_object *obj;
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"path",path);
 
@@ -414,7 +414,7 @@ bool kp_remove_file(KP *kp,KP_ARG *arg,
 	json_object *obj;
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"from_path",from_path);
 	kp_arg_add(arg,"to_path",to_path);
@@ -491,7 +491,7 @@ bool kp_copy_file(KP *kp,KP_ARG *arg,
 	json_object *obj;
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"from_path",from_path);
 	kp_arg_add(arg,"to_path",to_path);
@@ -574,7 +574,7 @@ bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	}
 	snprintf(base,len,"http://openapi.kuaipan.cn/1/copy_ref/%s/%s",root,path);
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
 	{
@@ -650,7 +650,7 @@ char *kp_get_upload_url(KP *kp,KP_ARG *arg)
 	json_object *obj;
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"GET",base,arg);
 	if(key == NULL)
 		return NULL;
@@ -730,7 +730,7 @@ bool kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 	snprintf(base,len,"%s%s",url,base);
 	free(url);
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	key=kp_get_oauth_key(kp,"POST",base,arg);
 	if(key == NULL)
 	{
@@ -842,7 +842,7 @@ bool kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 	}
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"path",path);
 
@@ -956,7 +956,7 @@ bool kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 	}
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"path",path);
 	snprintf(v_width,sizeof(v_width),"%d",width);
@@ -1119,7 +1119,7 @@ bool kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 	}
 
 	kp_oauth_update_timestamp(arg);
-	kp_oauth_update_once(arg);
+	kp_oauth_update_nonce(arg);
 	kp_arg_add(arg,"root",root);
 	kp_arg_add(arg,"path",path);
 	kp_arg_add(arg,"type",v_type);
@@ -1319,6 +1319,9 @@ bool _kp_get_file_info(KP *kp,KP_FILE_INFO *_file,char *data)
 
 			json_object_put(item);
 		}
+
+		object_string_get(res,&node->sha1,"sha1");
+		object_string_get(res,&node->share_id,"share_id");
 		object_int_get(res,&node->size,"size");
 		object_string_get(res,&node->create_time,"create_time");
 		object_string_get(res,&node->modify_time,"modify_time");
@@ -1445,8 +1448,10 @@ void object_string_get(json_object *obj,char **res,char *key)
 	data=json_object_object_get(obj,key);
 	if(data)
 	{
-		*res=(char *)json_object_get_string(data);
+		*res=strdup(json_object_get_string(data));
 		json_object_put(data);
+
+		return;
 	}
 
 	*res=NULL;
@@ -1484,6 +1489,8 @@ KP_FILE_NODE *init_kp_file_node(void)
 	if(node == NULL)
 		return NULL;
 
+	node->sha1=NULL;
+	node->share_id=NULL;
 	node->file_id=NULL;
 	node->type=file;
 	node->size=0;
@@ -1491,6 +1498,7 @@ KP_FILE_NODE *init_kp_file_node(void)
 	node->modify_time=NULL;
 	node->rev=NULL;
 	node->is_deleted=false;
+	node->next=NULL;
 
 	return node;
 }

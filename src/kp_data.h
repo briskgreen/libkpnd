@@ -85,6 +85,8 @@ typedef struct
  */
 typedef struct kp_file_node 
 {
+	char *sha1;
+	char *share_id;
 	char *file_id;
 	enum KP_TYPE type;
 //	enum TYPE {folder,file}type;

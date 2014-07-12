@@ -86,6 +86,8 @@ void kp_file_info_free(KP_FILE_INFO *file)
 	{
 		temp=file->files;
 
+		NULL_NOT_FREE(file->files->sha1);
+		NULL_NOT_FREE(file->files->share_id);
 		NULL_NOT_FREE(file->files->file_id);
 		NULL_NOT_FREE(file->files->create_time);
 		NULL_NOT_FREE(file->files->modify_time);

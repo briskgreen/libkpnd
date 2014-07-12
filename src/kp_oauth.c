@@ -59,6 +59,7 @@ bool kp_oauth_update_nonce(KP_ARG *arg)
 {
 	char *nonce;
 
+	kp_arg_remove(arg,"oauth_signature");
 	nonce=oauth_gen_nonce();
 	if(!nonce)
 	{
