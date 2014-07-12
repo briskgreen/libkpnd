@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 //错误代码全局变量
 int kp_errno;
 
@@ -36,6 +37,7 @@ int kp_errno;
 #define KP_ERROR_UPLOAD_FILE -22           //上传文件出错
 #define KP_ERROR_UPLOAD_URL -23            //获取上传文件url出错
 #define KP_ERROR_USER_INFO -24             //获取用户信息出错
+#define KP_ERROR_TOKEN -25                 //获取Token出错
 
 /*
  * 打印错误消息

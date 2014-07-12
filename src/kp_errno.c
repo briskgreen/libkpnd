@@ -80,6 +80,9 @@ char *kp_error(char *msg)
 		case KP_ERROR_USER_INFO:
 			error_msg="获取用户信息出错!\n";
 			break;
+		case KP_ERROR_TOKEN:
+			error_msg="获取Token出错!\n";
+			break;
 
 		default:
 			error_msg="未知道错误!\n";

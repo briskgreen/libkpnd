@@ -6,7 +6,6 @@
 #define _KP_DATA_H
 
 #include "kp_errno.h"
-#include <string.h>
 #include <stdbool.h>
 #include <json/json.h>
 

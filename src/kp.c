@@ -1247,7 +1247,7 @@ int object_get_err(json_object *obj,char **res)
 	data=json_object_object_get(obj,"msg");
 	if(data)
 	{
-		if(strcmp(json_object_get_string(data,"ok") == 0))
+		if(strcmp(json_object_get_string(data),"ok") == 0)
 		{
 			json_object_put(data);
 			return 0;

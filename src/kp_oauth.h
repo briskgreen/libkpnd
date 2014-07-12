@@ -35,9 +35,6 @@ char *kp_get_oauth_key(KP *kp,char *http_method,char *url,KP_ARG *arg);
 char *kp_get_authorize_url(KP *kp,KP_ARG *arg);
 
 //得到accessToken
-void kp_get_access_token(KP *kp,KP_ARG *arg);
-
-//进行授权
-bool kp_app_authorize(KP *kp,char *username,char *passwd);
+bool kp_get_access_token(KP *kp,KP_ARG *arg);
 
 #endif

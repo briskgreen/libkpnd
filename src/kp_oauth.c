@@ -23,7 +23,7 @@ KP_ARG *kp_oauth_arg_init(KP *kp)
 		return NULL;
 
 	t=time(NULL);
-	snprintf(timestamp,sizeof(timestamp),"%d",t);
+	snprintf(timestamp,sizeof(timestamp),"%ld",t);
 	nonce=oauth_gen_nonce();
 	if(!nonce)
 	{
@@ -40,6 +40,8 @@ KP_ARG *kp_oauth_arg_init(KP *kp)
 	KP_ADD("oauth_version","1.0");
 
 	free(nonce);
+
+	return arg;
 }
 
 bool kp_oauth_update_timestamp(KP_ARG *arg)
@@ -48,7 +50,7 @@ bool kp_oauth_update_timestamp(KP_ARG *arg)
 	char timestamp[64]={0};
 
 	t=time(NULL);
-	snprintf(timestamp,sizeof(timestamp),"%d",t);
+	snprintf(timestamp,sizeof(timestamp),"%ld",t);
 	
 	return kp_arg_update(arg,"oauth_timestamp",timestamp);
 }
@@ -111,7 +113,7 @@ char *kp_get_oauth_key(KP *kp,char *http_method,char *url,KP_ARG *arg)
 	}
 
 	buf=oauth_sign_hmac_sha1(base_string,key);
-	if(but == NULL)
+	if(buf == NULL)
 	{
 		free(base_string);
 		free(key);
@@ -140,7 +142,7 @@ char *kp_get_authorize_url(KP *kp,KP_ARG *arg)
 {
 	char *url;
 	char *res;
-	char *arg;
+	char *arg_url;
 	char *signature;
 	char *base_url="https://openapi.kuaipan.cn/open/requestToken";
 	char *token_url="https://www.kuaipan.cn/api.php?ac=open&op=authorise&oauth_token=";
@@ -155,20 +157,20 @@ char *kp_get_authorize_url(KP *kp,KP_ARG *arg)
 	kp_oauth_update_signature(arg,signature);
 	free(signature);
 
-	arg=kp_arg_get_url(arg->arg);
-	if(arg == NULL)
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
 		return NULL;
 
-	len=strlen(base_url)+strlen(arg);
+	len=strlen(base_url)+strlen(arg_url);
 	url=malloc(sizeof(char)*len+2);
 	if(url == NULL)
 	{
-		free(arg);
+		free(arg_url);
 		kp_errno=KP_ERROR_NO_MEM;
 		return NULL;
 	}
-	snprintf(url,sizeof(char)*len+2,"%s?%s",base_url,arg);
-	free(arg);
+	snprintf(url,sizeof(char)*len+2,"%s?%s",base_url,arg_url);
+	free(arg_url);
 
 	res=oauth_http_get(url,NULL);
 	free(url);
@@ -178,21 +180,21 @@ char *kp_get_authorize_url(KP *kp,KP_ARG *arg)
 		return NULL;
 	}
 
-	arg=kp_get_token(kp,res);
+	arg_url=kp_get_token(kp,res);
 	free(res);
-	if(arg == NULL)
+	if(arg_url == NULL)
 		return NULL;
 
-	len=strlen(token_url)+strlen(arg);
+	len=strlen(token_url)+strlen(arg_url);
 	url=malloc(sizeof(char)*len+1);
 	if(url == NULL)
 	{
-		free(arg);
+		free(arg_url);
 		kp_errno=KP_ERROR_NO_MEM;
 		return NULL;
 	}
-	snprintf(url,sizeof(char)*len+1,"%s%s",token_url,arg);
-	free(arg);
+	snprintf(url,sizeof(char)*len+1,"%s%s",token_url,arg_url);
+	free(arg_url);
 
 	return url;
 }
@@ -203,7 +205,7 @@ bool kp_get_access_token(KP *kp,KP_ARG *arg)
 	char *base_url="https://openapi.kuaipan.cn/open/accessToken";
 	char *url;
 	char *res;
-	char *arg;
+	char *arg_url;
 	int len;
 
 	kp_oauth_update_token(arg,kp->oauth_token);
@@ -216,20 +218,20 @@ bool kp_get_access_token(KP *kp,KP_ARG *arg)
 	kp_oauth_update_signature(arg,signature);
 	free(signature);
 
-	arg=kp_arg_get_url(arg->arg);
-	if(arg == NULL)
+	arg_url=kp_arg_get_url(arg->arg);
+	if(arg_url == NULL)
 		return false;
 
-	len=strlen(base_url)+strlen(arg);
+	len=strlen(base_url)+strlen(arg_url);
 	url=malloc(sizeof(char)*(len+2));
 	if(url == NULL)
 	{
-		free(arg);
+		free(arg_url);
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
-	snprintf(url,sizeof(char)*(len+2),"%s?%s",base_url,arg);
-	free(arg);
+	snprintf(url,sizeof(char)*(len+2),"%s?%s",base_url,arg_url);
+	free(arg_url);
 
 	res=oauth_http_get(url,NULL);
 	free(url);
@@ -241,9 +243,6 @@ bool kp_get_access_token(KP *kp,KP_ARG *arg)
 
 	return oauth_get_access_token(kp,res);
 }
-
-bool kp_app_authorize(KP *kp,char *username,char *passwd)
-{}
 
 char *oauth_get_key(KP *kp,KP_ARG *arg)
 {
@@ -348,29 +347,34 @@ char *kp_get_token(KP *kp,char *data)
 	obj=json_tokener_parse(data);
 	if(obj == NULL)
 	{
-		kp_errno=KP_ERRNO_TOKEN;
+		kp_errno=KP_ERROR_TOKEN;
 		return NULL;
 	}
 
 	str=json_object_object_get(obj,"msg");
 	if(str)
 	{
-		res=strdup(json_object_get_string(str));
+		if(strcmp(json_object_get_string(str),"ok") == 0)
+			goto ok;
+
+		if(kp->errmsg)
+			free(kp->errmsg);
+		kp->errmsg=strdup(json_object_get_string(str));
 		json_object_put(str);
 		json_object_put(obj);
 
-		return res;
+		return NULL;
 	}
-
+ok:
 	str=json_object_object_get(obj,"oauth_token");
 	if(str == NULL)
 	{
 		json_object_put(obj);
-		kp_errno=KP_ERRNO_TOKEN;
+		kp_errno=KP_ERROR_TOKEN;
 		return NULL;
 	}
 	res=strdup(json_object_get_string(str));
-	kp->oauth_token=json_object_get_string(str);
+	kp->oauth_token=strdup(json_object_get_string(str));
 	json_object_put(str);
 
 	str=json_object_object_get(obj,"oauth_token_secret");
@@ -379,7 +383,7 @@ char *kp_get_token(KP *kp,char *data)
 		json_object_put(obj);
 		free(kp->oauth_token);
 		free(res);
-		kp_errno=KP_ERRNO_TOKEN;
+		kp_errno=KP_ERROR_TOKEN;
 		return NULL;
 	}
 	
@@ -422,7 +426,7 @@ bool oauth_get_access_token(KP *kp,char *data)
 	str=json_object_object_get(obj,"oauth_token_secret");
 	if(str)
 	{
-		kp->oauth_token_secret=strdup(json_object_get_string(str));
+		kp->oauth_secret=strdup(json_object_get_string(str));
 		json_object_put(str);
 	}
 
