@@ -29,6 +29,7 @@ v1.0
 #需要的依赖
 libcurl
 liboauth
+json-c
 
 #联系作者
 briskgreen@163.com
