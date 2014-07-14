@@ -57,7 +57,8 @@ char *kp_get_upload_url(KP *kp,KP_ARG *arg);
  * func为进度函数
  * data为func函数的参数
  */
-bool kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
+bool kp_upload_file(KP *kp,KP_ARG *arg,char *root,char *path,
+		char *filename,bool overwrite,
 		kp_progress func,void *data);
 
 //下载文件

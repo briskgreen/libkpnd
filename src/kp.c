@@ -724,7 +724,8 @@ char *kp_get_upload_url(KP *kp,KP_ARG *arg)
 	}
 }
 
-bool kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
+bool kp_upload_file(KP *kp,KP_ARG *arg,char *root,char *path,
+		char *filename,bool overwrite,
 		kp_progress func,void *data)
 {
 	char *url;
@@ -751,10 +752,17 @@ bool kp_upload_file(KP *kp,KP_ARG *arg,char *filename,
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
-	snprintf(base,len,"%s%s",url,base);
+	snprintf(base,len,"%s/1/fileops/upload_file",url);
 	free(url);
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
+	kp_arg_add(arg,"root",root);
+	kp_arg_add(arg,"path",path);
+	if(overwrite)
+		kp_arg_add(arg,"overwrite","true");
+	else
+		kp_arg_add(arg,"overwrite","false");
+
 	key=kp_get_oauth_key(kp,"POST",base,arg);
 	if(key == NULL)
 	{
