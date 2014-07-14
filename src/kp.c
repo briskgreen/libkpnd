@@ -895,7 +895,7 @@ bool kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 		kp_errno=KP_ERROR_ARG;
 		return false;
 	}
-	len=sizeof(char)*(strlen(base)+strlen(arg_url)+1);
+	len=sizeof(char)*(strlen(base)+strlen(arg_url)+2);
 	if((url=malloc(len)) == NULL)
 	{
 		free(arg_url);
@@ -908,13 +908,8 @@ bool kp_download_file(KP *kp,KP_ARG *arg,char *root,char *path,
 
 	curl=curl_easy_init();
 	curl_easy_setopt(curl,CURLOPT_URL,url);
-#ifdef _WIN32
-	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,NULL);
-	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,NULL);
-#else
-	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,"/dev/null");
-	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"/dev/null");
-#endif
+	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,"");
+	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"");
 	if(func)
 	{
 		curl_easy_setopt(curl,CURLOPT_NOPROGRESS,false);
