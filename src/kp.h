@@ -16,19 +16,19 @@ typedef curl_progress_callback kp_progress;
  * 发生错误时返回错误代码
  * 结果保存在user中
  */
-bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user);
+bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO **user);
 
 //获取文件（夹）信息
 bool kp_get_file_info(KP *kp,KP_ARG *arg,
-		char *root,char *path,KP_FILE_INFO *file);
+		char *root,char *path,KP_FILE_INFO **file);
 
 //获取文件分享链接
 bool kp_get_file_share(KP *kp,KP_ARG *arg,
-		char *root,char *path,KP_FILE_SHARE *file);
+		char *root,char *path,KP_FILE_SHARE **file);
 
 //获取文件的历史版本
 bool kp_get_file_history(KP *kp,KP_ARG *arg,
-		char *root,char *path,KP_FILE_HIS *his);
+		char *root,char *path,KP_FILE_HIS **his);
 
 /* 创建文件夹
  * root app_folder或者kuaipan

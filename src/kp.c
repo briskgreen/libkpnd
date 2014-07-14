@@ -21,7 +21,7 @@ KP_FILE_NODE *init_kp_file_node(void);
 size_t kp_get_data(char *ptr,size_t size,size_t nmemb,KP_RET *data);
 size_t kp_save_to_file(char *ptr,size_t size,size_t nmemb,FILE *fp);
 
-bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
+bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO **user)
 {
 	char *res;
 	char *arg_url;
@@ -30,6 +30,12 @@ bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 	char *base="http://openapi.kuaipan.cn/1/account_info";
 	int len;
 
+	*user=malloc(sizeof(KP_USER_INFO));
+	if(*user == NULL)
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
 
@@ -70,11 +76,11 @@ bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO *user)
 		return false;
 	}
 
-	return _kp_get_user_info(kp,user,res);
+	return _kp_get_user_info(kp,*user,res);
 }
 
 bool kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
-		char *path,KP_FILE_INFO *file)
+		char *path,KP_FILE_INFO **file)
 {
 	char *key;
 	char *res;
@@ -83,6 +89,12 @@ bool kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 	char *base;
 	int len;
 
+	*file=malloc(sizeof(KP_FILE_INFO));
+	if(*file == NULL)
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/metadata/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -130,11 +142,11 @@ bool kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 		return false;
 	}
 
-	return _kp_get_file_info(kp,file,res);
+	return _kp_get_file_info(kp,*file,res);
 }
 
 bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
-		KP_FILE_SHARE *file)
+		KP_FILE_SHARE **file)
 {
 	char *key;
 	char *res;
@@ -143,6 +155,12 @@ bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 	char *base;
 	int len;
 
+	*file=malloc(sizeof(KP_FILE_SHARE));
+	if(*file == NULL)
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/shares/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -189,11 +207,11 @@ bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 		return false;
 	}
 
-	return _kp_get_file_share(kp,file,res);
+	return _kp_get_file_share(kp,*file,res);
 }
 
 bool kp_get_file_history(KP *kp,KP_ARG *arg,
-		char *root,char *path,KP_FILE_HIS *his)
+		char *root,char *path,KP_FILE_HIS **his)
 {
 	char *key;
 	char *res;
@@ -202,6 +220,12 @@ bool kp_get_file_history(KP *kp,KP_ARG *arg,
 	char *base;
 	int len;
 
+	*his=malloc(sizeof(KP_FILE_HIS));
+	if(*his == NULL)
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/history/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -248,7 +272,7 @@ bool kp_get_file_history(KP *kp,KP_ARG *arg,
 		return false;
 	}
 
-	return _kp_get_file_history(kp,his,res);
+	return _kp_get_file_history(kp,*his,res);
 }
 
 bool kp_create_file(KP *kp,KP_ARG *arg,char *root,char *path)
