@@ -1019,6 +1019,9 @@ bool kp_get_thumbnail(KP *kp,KP_ARG *arg,int width,int height,
 
 	curl=curl_easy_init();
 	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,"");
+	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"");
+	curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,true);
 	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_download_file);
 	curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
 
@@ -1180,6 +1183,9 @@ bool kp_doc_change(KP *kp,KP_ARG *arg,enum KP_CH_TYPE type,
 
 	curl=curl_easy_init();
 	curl_easy_setopt(curl,CURLOPT_URL,url);
+	curl_easy_setopt(curl,CURLOPT_COOKIEJAR,"");
+	curl_easy_setopt(curl,CURLOPT_COOKIEFILE,"");
+	curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,true);
 	curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,kp_download_file);
 	curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
 
