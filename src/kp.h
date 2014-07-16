@@ -48,7 +48,7 @@ bool kp_copy_file(KP *kp,KP_ARG *arg,
 		char *root,char *from_path,char *to_path);
 
 //复制引用
-bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path);
+bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF **ref,char *root,char *path);
 
 //获取上传文件的地址
 char *kp_get_upload_url(KP *kp,KP_ARG *arg);

@@ -580,7 +580,7 @@ bool kp_copy_file(KP *kp,KP_ARG *arg,
 	}
 }
 
-bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
+bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF **ref,char *root,char *path)
 {
 	char *key;
 	char *res;
@@ -590,6 +590,12 @@ bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	int len;
 	json_object *obj;
 
+	*ref=malloc(sizeof(KP_REF));
+	if(*ref == NULL)
+	{
+		kp_errno=KP_ERROR_NO_MEM;
+		return false;
+	}
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/copy_ref/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -654,8 +660,8 @@ bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF *ref,char *root,char *path)
 	}
 	else
 	{
-		object_string_get(obj,&ref->copy_ref,"copy_ref");
-		object_string_get(obj,&ref->expires,"expires");
+		object_string_get(obj,&(*ref)->copy_ref,"copy_ref");
+		object_string_get(obj,&(*ref)->expires,"expires");
 		json_object_put(obj);
 		free(res);
 
