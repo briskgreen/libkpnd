@@ -7,7 +7,15 @@
 #include "kp_data.h"
 #include <oauth.h>
 
-/* 初始化oauth参数并得到一个KP_ARG参数列表
+/* 
+ * 初始化oauth参数并得到一个KP_ARG参数列表
+ * 有如下参数
+ * oauth_comsumer_key
+ * oauth_token(如果KP结构中已经设置了的话)
+ * oauth_signature_method
+ * oauth_timestamp
+ * oauth_nonce
+ * oauth_version
  */
 KP_ARG *kp_oauth_arg_init(KP *kp);
 

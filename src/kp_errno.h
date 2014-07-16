@@ -1,5 +1,32 @@
 /*
  * 打印错误消息头头文件
+ * 各错误字符串中文解释
+ * account server error			帐号服务器查询失败，请过一段时间重试
+ * cannot create app folder		不能创建用户目录，请重新获取access Token
+ * login fail				登陆失败，可能用户密码不对或者无些帐号
+ * wrong venfication code		注册验证码错误或者失效
+ * commit fail				上传失败，请过一段时间重试
+ * bad openid				不能用此openid注册
+ * bad parameters			参数不正确
+ * bad request				请求url、参数不对
+ * no such api implemented		无此API
+ * bad signature			签名不正确
+ * request expired			请求过期(timestamp或者nonce不正确)
+ * bad consumer key			没有这个consumer key(你确定申请了应用？）
+ * not supported auth mode		你不能使用这种授权模式
+ * authorization expired		用户授权过期，请重新获取access_token
+ * api daily limit			您今天调用接口次数太多了吧
+ * no right to call this api		无权即调用此api
+ * reused nonce				nonce被重用了
+ * bad verifier				verifier错误 
+ * authorization failed			授权失败（不是生产状态的应用）
+ * file exist				同名文件（夹）已经存在
+ * forbidden				无权限访问，或者无权限进行此操作
+ * file not exist			文件夹不存在，父目录不存在
+ * too many files			一次操作太多文件
+ * file too large			文件大小超过能上传的上限
+ * server error				服务器错误，应该是我们（金山快盘公司）遇到bug了
+ * over space				用户空间已满
  */
 #ifndef _KP_ERRNO_H
 #define _KP_ERRNO_H

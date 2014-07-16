@@ -36,6 +36,7 @@ bool kp_get_user_info(KP *kp,KP_ARG *arg,KP_USER_INFO **user)
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
+	(*user)->user_name=NULL;
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
 
@@ -95,6 +96,15 @@ bool kp_get_file_info(KP *kp,KP_ARG *arg,char *root,
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
+	(*file)->path=NULL;
+	(*file)->root=NULL;
+	(*file)->file_id=NULL;
+	(*file)->create_time=NULL;
+	(*file)->modify_time=NULL;
+	(*file)->name=NULL;
+	(*file)->rev=NULL;
+	(*file)->files=NULL;
+
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/metadata/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -161,6 +171,9 @@ bool kp_get_file_share(KP *kp,KP_ARG *arg,char *root,char *path,
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
+	(*file)->url=NULL;
+	(*file)->access_code=NULL;
+
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/shares/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -226,6 +239,10 @@ bool kp_get_file_history(KP *kp,KP_ARG *arg,
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
+	(*his)->file_id=NULL;
+	(*his)->rev=NULL;
+	(*his)->create_time=NULL;
+
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/history/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
@@ -596,6 +613,9 @@ bool kp_copy_ref(KP *kp,KP_ARG *arg,KP_REF **ref,char *root,char *path)
 		kp_errno=KP_ERROR_NO_MEM;
 		return false;
 	}
+	(*ref)->copy_ref=NULL;
+	(*ref)->expires=NULL;
+
 	len=sizeof(char)*(strlen("http://openapi.kuaipan.cn/1/copy_ref/")+strlen(root)+strlen(path)+1);
 	if((base=malloc(len)) == NULL)
 	{
