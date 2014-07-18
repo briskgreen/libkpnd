@@ -28,9 +28,11 @@ Brisk（坑头哥）
 v1.0
 
 #需要的依赖
+<pre>
 libcurl
 liboauth
 json-c
+</pre>
 
 #联系作者
 briskgreen@163.com
