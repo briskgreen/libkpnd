@@ -1315,8 +1315,7 @@ bool _kp_get_file_info(KP *kp,KP_FILE_INFO *_file,char *data)
 	res=json_object_object_get(obj,"hash");
 	if(res)
 	{
-		strncpy(_file->hash,json_object_get_string(res),sizeof(char)*31);
-		_file->hash[32]='\0';
+		snprintf(_file->hash,sizeof(_file->hash),"%s",json_object_get_string(res));
 
 		json_object_put(res);
 	}
@@ -1346,6 +1345,14 @@ bool _kp_get_file_info(KP *kp,KP_FILE_INFO *_file,char *data)
 	}
 
 	files=json_object_object_get(obj,"files");
+	if(files == NULL)
+	{
+		json_object_put(obj);
+		free(data);
+
+		return true;
+	}
+
 	len=json_object_array_length(files);
 	if(len <= 0)
 	{

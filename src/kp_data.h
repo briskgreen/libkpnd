@@ -121,7 +121,8 @@ typedef struct kp_file_info
 {
 	char *path;
 	char *root;
-	char hash[32];
+	char hash[33];
+//	char *hash;
 	char *file_id;
 	enum KP_TYPE type;
 //	enum TYPE {folder,file}type;
