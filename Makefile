@@ -20,7 +20,7 @@ kp_errno.o:src/kp_errno.h src/kp_errno.c
 	$(CC) -c src/kp_errno.c 
 
 libkpnd.so:kp.o kp_oauth.o kp_data.o kp_errno.o
-	$(CC) -shared -fPIC -o libkpnd.so kp.o kp_oauth.o kp_data.o kp_errno.o
+	$(CC) -shared -fPIC -o libkpnd.so kp.o kp_oauth.o kp_data.o kp_errno.o -loauth -ljson
 	cp libkpnd.so lib/
 
 clean:
