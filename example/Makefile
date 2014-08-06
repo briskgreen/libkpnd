@@ -15,7 +15,7 @@ upload:
 	gcc -o upload upload.c $(INCLUDE) $(LIBS)
 
 get_user_info:
-	gcc -o upload upload.c $(INCLUDE) $(LIBS)
+	gcc -o get_user_info get_user_info.c $(INCLUDE) $(LIBS)
 
 clean:
-	rm -rfv oauth download get_file_info upload get_file_info
+	rm -rfv oauth download get_user_info upload get_file_info
