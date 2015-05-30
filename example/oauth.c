@@ -37,9 +37,17 @@ int main(int argc,char **argv)
 		printf("%s",kp_error(kp->errmsg)); //打印错误信息
 	else
 	{
-		printf("请将%s复制到浏览器中!\n",url);
+		printf("请将 %s 复制到浏览器中进行验证，验证完成之后请按回车!\n",url);
 		//返回的地址需要进行释放
 		free(url);
+		getchar();
+		if(!kp_get_access_token(kp,arg))
+		{
+			puts(kp_error(kp->errmsg));
+			kp_arg_destroy(arg);
+			kp_free(kp);
+			return -1;
+		}
 		/*
 		 * kp->oauth_token 获取得到的access_token
 		 * kp->secret 授权后的oauth_secret

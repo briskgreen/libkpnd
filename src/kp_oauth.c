@@ -213,7 +213,7 @@ bool kp_get_access_token(KP *kp,KP_ARG *arg)
 	kp_oauth_update_timestamp(arg);
 	kp_oauth_update_nonce(arg);
 
-	signature=kp_get_oauth_key(kp,"GET",url,arg);
+	signature=kp_get_oauth_key(kp,"GET",base_url,arg);
 	if(signature == NULL)
 		return false;
 	kp_oauth_update_signature(arg,signature);
@@ -390,7 +390,7 @@ ok:
 	
 	kp->oauth_secret=strdup(json_object_get_string(str));
 	json_object_put(str);
-	json_object_put(obj);
+	//json_object_put(obj);
 
 	return res;
 }
@@ -431,7 +431,7 @@ bool oauth_get_access_token(KP *kp,char *data)
 		json_object_put(str);
 	}
 
-	json_object_put(obj);
+	//json_object_put(obj);
 	free(data);
 
 	return true;
